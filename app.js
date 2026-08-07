@@ -94,7 +94,10 @@ const state = {
     submissions: [],
     results: [],
     // Which group cards the admin has opened; survives live re-renders.
-    expandedGroups: null
+    expandedGroups: null,
+    // When set, that group's card shows the person×person ballot matrix
+    // focused on this voter id instead of the trophy nomination counts.
+    matrixFocusByGroup: {}
   },
   adminParticipant: {
     selectedId: null,
@@ -1443,6 +1446,8 @@ function handleLogout() {
   state.monitorMessages = [];
   state.presence = [];
   state.expandedLoginGroups = null;
+  state.adminTrophy.expandedGroups = null;
+  state.adminTrophy.matrixFocusByGroup = {};
   state.knownMessageIds = new Set();
   state.adminMessagesBootstrapped = false;
   state.adminMsgScrollPaused = false;
@@ -2260,6 +2265,8 @@ function renderAdminTrophyStats() {
 /**
  * Shared group cards used by voting progress and login status on the dashboard.
  * doneKey marks members who are "complete" (voted / logged in).
+ * When voteMatrix is true (voting panel), expanded cards show nomination /
+ * ballot tables instead of only the member checklist.
  */
 function renderGroupStatusCards(options) {
   const {
@@ -2271,7 +2278,8 @@ function renderGroupStatusCards(options) {
     doneLabel,
     pendingLabel,
     emptyAllDone,
-    emptyPendingTitle
+    emptyPendingTitle,
+    voteMatrix = false
   } = options;
 
   if (!container) return;
@@ -2296,28 +2304,53 @@ function renderGroupStatusCards(options) {
     ));
   }
   const expanded = expandedSetRef.get();
+  const focusByGroup = voteMatrix ? state.adminTrophy.matrixFocusByGroup : null;
 
   const cards = groups.map(group => {
     const doneCount = group.members.filter(m => m[doneKey]).length;
     const label = group.group_label;
     const heading = group.display_label || formatGroupLabel(label);
     const isOpen = expanded.has(label);
-    const membersHtml = group.members.map(m => `
-      <div class="voter-member ${m[doneKey] ? 'voter-done' : 'voter-pending'}">
+    const isStaff = /STAFF/i.test(label);
+    const focusId = focusByGroup ? (focusByGroup[label] || null) : null;
+
+    const membersHtml = group.members.map(m => {
+      const classes = `voter-member ${m[doneKey] ? 'voter-done' : 'voter-pending'}${focusId === m.participant_id ? ' is-focus' : ''}`;
+      const inner = `
         <span class="voter-check" aria-hidden="true">${m[doneKey] ? '✓' : '○'}</span>
         <span class="voter-id">${escapeHtml(m.participant_id)}</span>
         <span class="voter-status-label">${m[doneKey] ? doneLabel : pendingLabel}</span>
-      </div>
-    `).join('');
+      `;
+      if (!voteMatrix) {
+        return `<div class="${classes}">${inner}</div>`;
+      }
+      return `<button type="button" class="${classes}" data-member-id="${escapeHtml(m.participant_id)}">${inner}</button>`;
+    }).join('');
+
+    let detailHtml = `<div class="group-voter-members">${membersHtml}</div>`;
+    if (voteMatrix) {
+      const matrixHtml = focusId
+        ? buildGroupBallotMatrixHtml(group, focusId)
+        : buildGroupNominationMatrixHtml(group);
+      detailHtml = `
+        <div class="group-voter-members">${membersHtml}</div>
+        <div class="group-vote-matrix-wrap">
+          <p class="group-vote-matrix-hint">${focusId
+            ? `獨立選票：列＝投票者、欄＝被投者、格＝Trophy（目前：${escapeHtml(focusId)}）· 再撳標題返回總覽`
+            : '總覽：列＝Trophy、欄＝參加者、格＝獲提名次數 · 撳人名睇邊個投邊個'}</p>
+          ${matrixHtml}
+        </div>
+      `;
+    }
 
     return `
-      <div class="group-voter-card${isOpen ? ' is-open' : ''}" data-group="${escapeHtml(label)}">
+      <div class="group-voter-card${isOpen ? ' is-open' : ''}${isStaff ? ' is-staff' : ''}" data-group="${escapeHtml(label)}">
         <button type="button" class="group-voter-header" aria-expanded="${isOpen ? 'true' : 'false'}">
           <span class="group-voter-chevron" aria-hidden="true"></span>
           <h4>${escapeHtml(heading)}</h4>
           <span class="group-voter-count">${doneCount}/${group.members.length}</span>
         </button>
-        <div class="group-voter-members"${isOpen ? '' : ' hidden'}>${membersHtml}</div>
+        <div class="group-voter-body"${isOpen ? '' : ' hidden'}>${detailHtml}</div>
       </div>
     `;
   }).join('');
@@ -2333,13 +2366,138 @@ function renderGroupStatusCards(options) {
       const groupLabel = card?.dataset.group;
       if (!groupLabel || !expanded) return;
       const open = expanded.has(groupLabel);
-      if (open) expanded.delete(groupLabel);
-      else expanded.add(groupLabel);
+      if (open) {
+        expanded.delete(groupLabel);
+        if (focusByGroup) delete focusByGroup[groupLabel];
+      } else {
+        expanded.add(groupLabel);
+        if (focusByGroup) delete focusByGroup[groupLabel];
+      }
+      if (voteMatrix) {
+        renderGroupStatusCards(options);
+        return;
+      }
       card.classList.toggle('is-open', !open);
       btn.setAttribute('aria-expanded', open ? 'false' : 'true');
-      card.querySelector('.group-voter-members')?.classList.toggle('hidden', open);
+      card.querySelector('.group-voter-body')?.classList.toggle('hidden', open);
     });
   });
+
+  if (voteMatrix) {
+    const selectMember = (groupLabel, memberId) => {
+      if (!groupLabel || !memberId || !focusByGroup) return;
+      if (!expanded.has(groupLabel)) expanded.add(groupLabel);
+      focusByGroup[groupLabel] = focusByGroup[groupLabel] === memberId ? null : memberId;
+      renderGroupStatusCards(options);
+    };
+
+    container.querySelectorAll('.voter-member[data-member-id]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const card = btn.closest('.group-voter-card');
+        selectMember(card?.dataset.group, btn.dataset.memberId);
+      });
+    });
+
+    container.querySelectorAll('.matrix-person-btn[data-member-id]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const card = btn.closest('.group-voter-card');
+        selectMember(card?.dataset.group, btn.dataset.memberId);
+      });
+    });
+  }
+}
+
+/** How many submitted/draft nominations each member received per trophy. */
+function buildNominationCountMap(memberIds) {
+  const members = new Set(memberIds);
+  const counts = new Map();
+  state.adminTrophy.submissions.forEach(submission => {
+    (submission.pairings || []).forEach(pair => {
+      if (!members.has(pair.receiver_id)) return;
+      const key = pair.trophy_id + '\0' + pair.receiver_id;
+      counts.set(key, (counts.get(key) || 0) + 1);
+    });
+  });
+  return counts;
+}
+
+/** sender → receiver → trophy for members in one group. */
+function buildBallotMap(memberIds) {
+  const members = new Set(memberIds);
+  const map = new Map();
+  state.adminTrophy.submissions.forEach(submission => {
+    const sender = submission.participant_id;
+    if (!members.has(sender)) return;
+    (submission.pairings || []).forEach(pair => {
+      if (!members.has(pair.receiver_id)) return;
+      if (!map.has(sender)) map.set(sender, new Map());
+      map.get(sender).set(pair.receiver_id, pair.trophy_id);
+    });
+  });
+  return map;
+}
+
+function buildGroupNominationMatrixHtml(group) {
+  const members = group.members.map(m => m.participant_id);
+  const trophies = state.adminTrophy.trophies || [];
+  if (!members.length) return '<p class="group-vote-matrix-empty">此組沒有參加者</p>';
+  if (!trophies.length) return '<p class="group-vote-matrix-empty">尚未載入 Trophy 清單</p>';
+
+  const counts = buildNominationCountMap(members);
+  const head = members.map(id =>
+    `<th scope="col"><button type="button" class="matrix-person-btn" data-member-id="${escapeHtml(id)}">${escapeHtml(id)}</button></th>`
+  ).join('');
+
+  const rows = trophies.map(t => {
+    const cells = members.map(id => {
+      const n = counts.get(t.trophy_id + '\0' + id) || 0;
+      return `<td class="${n > 0 ? 'matrix-cell-hot' : ''}">${n || ''}</td>`;
+    }).join('');
+    return `<tr><th scope="row">${escapeHtml(t.trophy_id)}</th>${cells}</tr>`;
+  }).join('');
+
+  return `
+    <div class="table-wrap group-vote-matrix">
+      <table class="data-table vote-matrix-table">
+        <thead><tr><th scope="col"></th>${head}</tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  `;
+}
+
+function buildGroupBallotMatrixHtml(group, focusId) {
+  const members = group.members.map(m => m.participant_id);
+  if (!members.length) return '<p class="group-vote-matrix-empty">此組沒有參加者</p>';
+
+  const ballots = buildBallotMap(members);
+  const head = members.map(id =>
+    `<th scope="col" class="${id === focusId ? 'is-focus' : ''}">${escapeHtml(id)}</th>`
+  ).join('');
+
+  // Show every voter as a row so admin can see who→whom; highlight focus row.
+  const rows = members.map(sender => {
+    const rowMap = ballots.get(sender) || new Map();
+    const cells = members.map(receiver => {
+      if (sender === receiver) return '<td class="matrix-cell-self">—</td>';
+      const trophy = rowMap.get(receiver);
+      return `<td class="${trophy ? 'matrix-cell-hot' : ''}">${trophy ? escapeHtml(trophy) : ''}</td>`;
+    }).join('');
+    return `<tr class="${sender === focusId ? 'is-focus-row' : ''}"><th scope="row">${escapeHtml(sender)}</th>${cells}</tr>`;
+  }).join('');
+
+  return `
+    <div class="table-wrap group-vote-matrix">
+      <table class="data-table vote-matrix-table">
+        <thead><tr><th scope="col">投票者 \\ 被投</th>${head}</tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  `;
 }
 
 function renderAdminPendingVoters() {
@@ -2355,7 +2513,8 @@ function renderAdminPendingVoters() {
     doneLabel: '已投',
     pendingLabel: '未投',
     emptyAllDone: '所有參加者均已完成投票',
-    emptyPendingTitle: '尚未完成投票'
+    emptyPendingTitle: '尚未完成投票',
+    voteMatrix: true
   });
 }
 
