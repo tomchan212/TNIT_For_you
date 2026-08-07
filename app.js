@@ -2643,7 +2643,7 @@ function buildGroupNominationMatrixHtml(group) {
 
   return `
     ${buildMatrixPeopleBarHtml(members, null)}
-    <p class="group-vote-matrix-hint">撳人名睇獨立選票 · 下圖係定影，左右移動唔會錯位</p>
+    <p class="group-vote-matrix-hint">撳人名睇獨立選票 · 矩陣會縮放以完整顯示於卡片內</p>
     <div class="vote-matrix-image-wrap">
       <img class="vote-matrix-image" src="${src}" alt="組別提名總覽" draggable="false">
     </div>
@@ -2678,7 +2678,7 @@ function buildGroupBallotMatrixHtml(group, focusId) {
 
   return `
     ${buildMatrixPeopleBarHtml(members, focusId)}
-    <p class="group-vote-matrix-hint">撳人名切換焦點 · 下圖係定影，左右移動唔會錯位</p>
+    <p class="group-vote-matrix-hint">撳人名切換焦點 · 矩陣會縮放以完整顯示於卡片內</p>
     <div class="vote-matrix-image-wrap">
       <img class="vote-matrix-image" src="${src}" alt="${escapeHtml(focusId)} 的選票矩陣" draggable="false">
     </div>
