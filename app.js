@@ -3076,7 +3076,7 @@ async function refreshAdminParticipantDetail() {
 }
 
 function deriveGroupId(participantId) {
-  const match = String(participantId || '').match(/^(\d)[A-F]$/i);
+  const match = String(participantId || '').match(/^(\d)[A-H]$/i);
   return match ? 'GROUP_' + match[1] : 'GROUP_STAFF';
 }
 
