@@ -85,8 +85,13 @@ async function run() {
     originalGroup = await page.inputValue('#admin-edit-group');
     check('讀到現有分組', !!originalGroup, originalGroup);
 
-    const probeGroup = originalGroup === 'GROUP_1' ? 'GROUP_TEST' : 'GROUP_1';
-    await page.fill('#admin-edit-group', probeGroup);
+    const isSelect = await page.evaluate(
+      () => document.getElementById('admin-edit-group')?.tagName === 'SELECT'
+    );
+    check('分組欄位為下拉選單', isSelect === true);
+
+    const probeGroup = originalGroup === 'GROUP_1' ? 'GROUP_2' : 'GROUP_1';
+    await page.selectOption('#admin-edit-group', probeGroup);
     await page.click('#admin-save-participant');
     await page.waitForSelector('.toast', { timeout: 15000 });
     const toast = (await page.textContent('.toast')).trim();
@@ -101,7 +106,7 @@ async function run() {
 
     // Put it back so the live roster is not left dirty.
     await page.waitForSelector('#loading-overlay.hidden', { timeout: 10000 }).catch(() => {});
-    await page.fill('#admin-edit-group', originalGroup);
+    await page.selectOption('#admin-edit-group', originalGroup);
     await page.click('#admin-save-participant');
     await page.waitForSelector('.toast:has-text("分組已更新")', { timeout: 15000 });
     await page.waitForFunction(
