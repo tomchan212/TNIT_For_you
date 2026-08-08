@@ -244,6 +244,8 @@ function cacheDOM() {
   DOM.adminDeleteMessages = document.getElementById('admin-delete-messages');
   DOM.adminResetTrophy = document.getElementById('admin-reset-trophy');
   DOM.adminDeleteAllRecords = document.getElementById('admin-delete-all-records');
+  DOM.adminBulkDeleteMessages = document.getElementById('admin-bulk-delete-messages');
+  DOM.adminBulkResetVotes = document.getElementById('admin-bulk-reset-votes');
   DOM.adminBulkDeleteAll = document.getElementById('admin-bulk-delete-all');
   DOM.adminVersion = document.getElementById('admin-version');
   DOM.adminParticipantCount = document.getElementById('admin-participant-count');
@@ -3182,6 +3184,37 @@ async function handleAdminDeleteAllRecords() {
   })());
 }
 
+async function handleAdminBulkDeleteMessages() {
+  const count = state.participants.length;
+  if (!window.confirm('確定要刪除全部 ' + count + ' 位參加者的留言嗎？\n此操作無法復原！')) return;
+
+  await runProgressButton(DOM.adminBulkDeleteMessages, (async () => {
+    try {
+      const removed = await data.clearAllMessages();
+      showToast('已刪除 ' + removed + ' 則留言', 'success');
+      await refreshAdminParticipantDetail();
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  })());
+}
+
+async function handleAdminBulkResetVotes() {
+  const count = state.participants.length;
+  if (!window.confirm('確定要重置全部 ' + count + ' 位參加者的獎項投票嗎？\n包括：投票提交、計算結果。\n此操作無法復原！')) return;
+
+  await runProgressButton(DOM.adminBulkResetVotes, (async () => {
+    try {
+      const removed = await data.resetAllVotes();
+      showToast('已重置投票（清除 ' + removed + ' 項紀錄）', 'success');
+      refreshAdminTrophyViews();
+      await refreshAdminParticipantDetail();
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  })());
+}
+
 async function handleAdminBulkDeleteAll() {
   const count = state.participants.length;
   if (!window.confirm('確定要刪除全部 ' + count + ' 位參加者的所有紀錄嗎？\n包括：已發留言、獎項投票、結果。\n此操作無法復原！')) return;
@@ -3191,6 +3224,7 @@ async function handleAdminBulkDeleteAll() {
     try {
       const removed = await data.clearAllRecords();
       showToast('已清除 ' + removed + ' 項紀錄，投票狀態已重設', 'success');
+      refreshAdminTrophyViews();
       await refreshAdminParticipantDetail();
     } catch (err) {
       showToast(err.message, 'error');
@@ -3414,6 +3448,8 @@ function bindEvents() {
   DOM.adminDeleteMessages.addEventListener('click', handleAdminDeleteMessages);
   DOM.adminResetTrophy.addEventListener('click', handleAdminResetTrophy);
   DOM.adminDeleteAllRecords.addEventListener('click', handleAdminDeleteAllRecords);
+  DOM.adminBulkDeleteMessages.addEventListener('click', handleAdminBulkDeleteMessages);
+  DOM.adminBulkResetVotes.addEventListener('click', handleAdminBulkResetVotes);
   DOM.adminBulkDeleteAll.addEventListener('click', handleAdminBulkDeleteAll);
 
   DOM.auditSearch.addEventListener('input', renderAuditTable);

@@ -532,6 +532,40 @@ export async function clearAllRecords() {
   return operations.length;
 }
 
+/** Wipe every message for every participant. */
+export async function clearAllMessages() {
+  const snapshot = await getDocs(collection(db, 'messages'));
+  const operations = snapshot.docs.map(d => batch => batch.delete(d.ref));
+  await commitAll(operations);
+  return operations.length;
+}
+
+/**
+ * Clear every ballot and published result. If results were already calculated
+ * or published, drop the voting status back to closed so the admin can reopen.
+ */
+export async function resetAllVotes() {
+  const operations = [];
+  for (const name of ['submissions', 'results']) {
+    const snapshot = await getDocs(collection(db, name));
+    snapshot.docs.forEach(d => operations.push(batch => batch.delete(d.ref)));
+  }
+  await commitAll(operations);
+
+  const votingSnap = await getDoc(doc(db, 'config', 'voting'));
+  const status = (votingSnap.data() || {}).voting_status || 'DRAFT';
+  const patch = {
+    calculated_at: '',
+    published_at: '',
+    fallback_activated: false
+  };
+  if (status === 'CALCULATED' || status === 'PUBLISHED') {
+    patch.voting_status = 'VOTING_CLOSED';
+  }
+  await setDoc(doc(db, 'config', 'voting'), patch, { merge: true });
+  return operations.length;
+}
+
 export async function resetParticipantVote(participantId) {
   await commitAll([
     batch => batch.delete(doc(db, 'submissions', participantId)),
