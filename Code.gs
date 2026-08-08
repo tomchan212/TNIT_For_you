@@ -447,7 +447,7 @@ function participantExists(participantId) {
 
 function deriveGroupIdFromParticipantId(participantId) {
   const pid = normalizeParticipantId(participantId);
-  const m = pid.match(/^(\d)[A-F]$/);
+  const m = pid.match(/^(\d)[A-H]$/);
   if (m) return 'GROUP_' + m[1];
   return 'GROUP_STAFF';
 }

@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-08-06T13:13:57+00:00",
-  "count": 49,
+  "generated_at": "2026-08-08T02:57:57+00:00",
+  "count": 61,
   "participants": [
     {
       "participant_id": "1A",
@@ -24,6 +24,14 @@
     },
     {
       "participant_id": "1F",
+      "group_id": "GROUP_1"
+    },
+    {
+      "participant_id": "1G",
+      "group_id": "GROUP_1"
+    },
+    {
+      "participant_id": "1H",
       "group_id": "GROUP_1"
     },
     {
@@ -51,6 +59,14 @@
       "group_id": "GROUP_2"
     },
     {
+      "participant_id": "2G",
+      "group_id": "GROUP_2"
+    },
+    {
+      "participant_id": "2H",
+      "group_id": "GROUP_2"
+    },
+    {
       "participant_id": "3A",
       "group_id": "GROUP_3"
     },
@@ -72,6 +88,14 @@
     },
     {
       "participant_id": "3F",
+      "group_id": "GROUP_3"
+    },
+    {
+      "participant_id": "3G",
+      "group_id": "GROUP_3"
+    },
+    {
+      "participant_id": "3H",
       "group_id": "GROUP_3"
     },
     {
@@ -99,6 +123,14 @@
       "group_id": "GROUP_4"
     },
     {
+      "participant_id": "4G",
+      "group_id": "GROUP_4"
+    },
+    {
+      "participant_id": "4H",
+      "group_id": "GROUP_4"
+    },
+    {
       "participant_id": "5A",
       "group_id": "GROUP_5"
     },
@@ -123,6 +155,14 @@
       "group_id": "GROUP_5"
     },
     {
+      "participant_id": "5G",
+      "group_id": "GROUP_5"
+    },
+    {
+      "participant_id": "5H",
+      "group_id": "GROUP_5"
+    },
+    {
       "participant_id": "6A",
       "group_id": "GROUP_6"
     },
@@ -144,6 +184,14 @@
     },
     {
       "participant_id": "6F",
+      "group_id": "GROUP_6"
+    },
+    {
+      "participant_id": "6G",
+      "group_id": "GROUP_6"
+    },
+    {
+      "participant_id": "6H",
       "group_id": "GROUP_6"
     },
     {

@@ -28,14 +28,17 @@ def build_participants():
         "3D": "98765452", "4D": "98765453", "5D": "98765454", "6D": "98765455",
         "1E": "98765456", "2E": "98765457", "3E": "98765458", "4E": "98765459",
         "5E": "98765460", "6E": "98765461", "1F": "98765462", "2F": "98765463",
-        "3F": "98765464", "4F": "98765465", "5F": "98765466",
+        "3F": "98765464", "4F": "98765465", "5F": "98765466", "6F": "98765467",
+        "1G": "98765468", "2G": "98765469", "3G": "98765470", "4G": "98765471",
+        "5G": "98765472", "6G": "98765473", "1H": "98765474", "2H": "98765475",
+        "3H": "98765476", "4H": "98765477", "5H": "98765478", "6H": "98765479",
         "WILL": "11111111", "PHOEBE": "22222222", "RIGHT": "33333333",
         "RENAE": "44444444", "CHUNJAI": "55555555", "IRENE": "66666666",
         "KAKA": "77777777", "KAYI": "88888888", "WINGLAM": "99999999",
         "CHERYL": "00000000", "QQ": "12121212", "KELLY": "13131313", "BRO": "14141414",
     }
     for n in range(1, 7):
-        for letter in "ABCDEF":
+        for letter in "ABCDEFGH":
             pid = f"{n}{letter}"
             rows.append([pid, phones.get(pid, ""), f"GROUP_{n}"])
     for pid in ["WILL", "PHOEBE", "RIGHT", "RENAE", "CHUNJAI", "IRENE",
@@ -73,7 +76,7 @@ def build_workbook():
     for r, row in enumerate(samples, 2):
         for c, val in enumerate(row, 1):
             ws.cell(row=r, column=c, value=val).border = THIN_BORDER
-    add_note(ws, 52, "說明：group_id 必須相同才能成為 Trophy 隊友。1A-1F 用 GROUP_1，2A-2F 用 GROUP_2… 工作人員用 GROUP_STAFF。勿將電話號碼填入 group_id！")
+    add_note(ws, 64, "說明：group_id 必須相同才能成為 Trophy 隊友。1A-1H 用 GROUP_1，2A-2H 用 GROUP_2… 工作人員用 GROUP_STAFF。勿將電話號碼填入 group_id！")
 
     # ── Messages ──
     ws = wb.create_sheet("Messages")
