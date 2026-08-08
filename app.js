@@ -3072,7 +3072,7 @@ function renderAdminParticipantDetail(detail) {
   // change someone else's password. set_participant_phone.py does that.
   DOM.adminEditPhone.readOnly = true;
   DOM.adminEditPhone.title = '電話號碼即登入密碼，需在電腦執行 set_participant_phone.py 更改';
-  DOM.adminEditGroup.value = p.group_id || '';
+  populateAdminEditGroupSelect(p.group_id || '');
 
   const submissionTone = stats.submission_status === 'submitted' ? 'tone-published' : 'tone-draft';
   DOM.adminParticipantStats.innerHTML = `
@@ -3095,6 +3095,46 @@ function deriveGroupId(participantId) {
   return match ? 'GROUP_' + match[1] : 'GROUP_STAFF';
 }
 
+/** Standard group options for settings dropdowns, plus any live extras. */
+function listEditableGroupIds(selectedId) {
+  const groups = new Set([
+    'GROUP_1', 'GROUP_2', 'GROUP_3', 'GROUP_4', 'GROUP_5', 'GROUP_6', 'GROUP_STAFF'
+  ]);
+  state.participants.forEach(p => {
+    if (p.group_id) groups.add(p.group_id);
+  });
+  if (selectedId) groups.add(selectedId);
+  return [...groups].sort(compareGroupLabels);
+}
+
+function fillGroupSelect(select, selectedId, { includeBlank = false, blankLabel = '請選擇分組' } = {}) {
+  if (!select) return;
+  const groups = listEditableGroupIds(selectedId);
+  const options = groups.map(g =>
+    `<option value="${escapeHtml(g)}">${escapeHtml(formatGroupLabel(g))}</option>`
+  );
+  select.innerHTML = (includeBlank
+    ? `<option value="">${escapeHtml(blankLabel)}</option>`
+    : '') + options.join('');
+  if (selectedId && groups.includes(selectedId)) {
+    select.value = selectedId;
+  } else if (includeBlank) {
+    select.value = '';
+  }
+}
+
+function populateAdminEditGroupSelect(selectedId) {
+  fillGroupSelect(DOM.adminEditGroup, selectedId);
+}
+
+function populateAdminBulkGroupSelect() {
+  const prev = DOM.adminBulkGroup ? DOM.adminBulkGroup.value : '';
+  fillGroupSelect(DOM.adminBulkGroup, prev, {
+    includeBlank: true,
+    blankLabel: '請選擇要套用嘅分組'
+  });
+}
+
 async function handleAdminSaveParticipant() {
   const pid = state.adminParticipant.selectedId;
   if (!pid) { showToast('請先選擇參加者', 'error'); return; }
@@ -3108,6 +3148,7 @@ async function handleAdminSaveParticipant() {
       const person = state.participants.find(p => p.participant_id === pid);
       if (person) person.group_id = groupId;
       setParticipantsCache(state.participants);
+      populateAdminBulkGroupSelect();
       showToast('分組已更新', 'success');
       await refreshAdminParticipantDetail();
     } catch (err) {
@@ -3191,7 +3232,7 @@ async function handleAdminBulkAutoGroup() {
 async function handleAdminBulkApplyGroup() {
   const groupId = (DOM.adminBulkGroup.value || DOM.adminEditGroup.value || '').trim();
   if (!groupId) {
-    showToast('請在「統一分組」欄位輸入 group_id', 'error');
+    showToast('請先在「統一分組」下拉選單選擇 group_id', 'error');
     return;
   }
   if (!window.confirm('確定要將分組「' + groupId + '」套用到全部 ' + state.participants.length + ' 位參加者嗎？')) return;
@@ -3247,6 +3288,7 @@ async function handleAdminBulkDeleteAll() {
 
 async function afterBulkGroupChange() {
   initAdminParticipantCombobox();
+  populateAdminBulkGroupSelect();
   refreshAdminTrophyViews();
   if (state.adminParticipant.selectedId) {
     await refreshAdminParticipantDetail();
@@ -3255,6 +3297,7 @@ async function afterBulkGroupChange() {
 
 function initAdminParticipantsPanel() {
   initAdminParticipantCombobox();
+  populateAdminBulkGroupSelect();
   if (state.adminParticipant.selectedId) {
     refreshAdminParticipantDetail();
   }
