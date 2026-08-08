@@ -244,9 +244,6 @@ function cacheDOM() {
   DOM.adminDeleteMessages = document.getElementById('admin-delete-messages');
   DOM.adminResetTrophy = document.getElementById('admin-reset-trophy');
   DOM.adminDeleteAllRecords = document.getElementById('admin-delete-all-records');
-  DOM.adminBulkGroup = document.getElementById('admin-bulk-group');
-  DOM.adminBulkAutoGroup = document.getElementById('admin-bulk-auto-group');
-  DOM.adminBulkApplyGroup = document.getElementById('admin-bulk-apply-group');
   DOM.adminBulkDeleteAll = document.getElementById('admin-bulk-delete-all');
   DOM.adminVersion = document.getElementById('admin-version');
   DOM.adminParticipantCount = document.getElementById('admin-participant-count');
@@ -3071,7 +3068,7 @@ function renderAdminParticipantDetail(detail) {
   // change someone else's password. set_participant_phone.py does that.
   DOM.adminEditPhone.readOnly = true;
   DOM.adminEditPhone.title = '電話號碼即登入密碼，需在電腦執行 set_participant_phone.py 更改';
-  DOM.adminEditGroup.value = p.group_id || '';
+  populateAdminEditGroupSelect(p.group_id || '');
 
   const submissionTone = stats.submission_status === 'submitted' ? 'tone-published' : 'tone-draft';
   DOM.adminParticipantStats.innerHTML = `
@@ -3089,9 +3086,27 @@ async function refreshAdminParticipantDetail() {
   await selectAdminParticipant(state.adminParticipant.selectedId);
 }
 
-function deriveGroupId(participantId) {
-  const match = String(participantId || '').match(/^(\d)[A-F]$/i);
-  return match ? 'GROUP_' + match[1] : 'GROUP_STAFF';
+/** Standard group options for the settings dropdown, plus any live extras. */
+function listEditableGroupIds(selectedId) {
+  const groups = new Set([
+    'GROUP_1', 'GROUP_2', 'GROUP_3', 'GROUP_4', 'GROUP_5', 'GROUP_6', 'GROUP_STAFF'
+  ]);
+  state.participants.forEach(p => {
+    if (p.group_id) groups.add(p.group_id);
+  });
+  if (selectedId) groups.add(selectedId);
+  return [...groups].sort(compareGroupLabels);
+}
+
+function populateAdminEditGroupSelect(selectedId) {
+  if (!DOM.adminEditGroup) return;
+  const groups = listEditableGroupIds(selectedId);
+  DOM.adminEditGroup.innerHTML = groups.map(g =>
+    `<option value="${escapeHtml(g)}">${escapeHtml(formatGroupLabel(g))}</option>`
+  ).join('');
+  if (selectedId && groups.includes(selectedId)) {
+    DOM.adminEditGroup.value = selectedId;
+  }
 }
 
 async function handleAdminSaveParticipant() {
@@ -3167,49 +3182,6 @@ async function handleAdminDeleteAllRecords() {
   })());
 }
 
-async function handleAdminBulkAutoGroup() {
-  if (!window.confirm('確定要依參加者編號自動修正全部分組嗎？\n（例如 1A→GROUP_1、其他→GROUP_STAFF）')) return;
-
-  await runProgressButton(DOM.adminBulkAutoGroup, (async () => {
-    try {
-      const assignments = {};
-      state.participants.forEach(p => {
-        assignments[p.participant_id] = deriveGroupId(p.participant_id);
-      });
-      const updated = await data.bulkSetGroups(assignments);
-      state.participants.forEach(p => { p.group_id = assignments[p.participant_id]; });
-      setParticipantsCache(state.participants);
-      showToast('已修正 ' + updated + ' 位參加者', 'success');
-      await afterBulkGroupChange();
-    } catch (err) {
-      showToast(err.message, 'error');
-    }
-  })());
-}
-
-async function handleAdminBulkApplyGroup() {
-  const groupId = (DOM.adminBulkGroup.value || DOM.adminEditGroup.value || '').trim();
-  if (!groupId) {
-    showToast('請在「統一分組」欄位輸入 group_id', 'error');
-    return;
-  }
-  if (!window.confirm('確定要將分組「' + groupId + '」套用到全部 ' + state.participants.length + ' 位參加者嗎？')) return;
-
-  await runProgressButton(DOM.adminBulkApplyGroup, (async () => {
-    try {
-      const assignments = {};
-      state.participants.forEach(p => { assignments[p.participant_id] = groupId; });
-      const updated = await data.bulkSetGroups(assignments);
-      state.participants.forEach(p => { p.group_id = groupId; });
-      setParticipantsCache(state.participants);
-      showToast('已套用到 ' + updated + ' 位參加者', 'success');
-      await afterBulkGroupChange();
-    } catch (err) {
-      showToast(err.message, 'error');
-    }
-  })());
-}
-
 async function handleAdminBulkDeleteAll() {
   const count = state.participants.length;
   if (!window.confirm('確定要刪除全部 ' + count + ' 位參加者的所有紀錄嗎？\n包括：已發留言、獎項投票、結果。\n此操作無法復原！')) return;
@@ -3224,14 +3196,6 @@ async function handleAdminBulkDeleteAll() {
       showToast(err.message, 'error');
     }
   })());
-}
-
-async function afterBulkGroupChange() {
-  initAdminParticipantCombobox();
-  refreshAdminTrophyViews();
-  if (state.adminParticipant.selectedId) {
-    await refreshAdminParticipantDetail();
-  }
 }
 
 function initAdminParticipantsPanel() {
@@ -3450,8 +3414,6 @@ function bindEvents() {
   DOM.adminDeleteMessages.addEventListener('click', handleAdminDeleteMessages);
   DOM.adminResetTrophy.addEventListener('click', handleAdminResetTrophy);
   DOM.adminDeleteAllRecords.addEventListener('click', handleAdminDeleteAllRecords);
-  DOM.adminBulkAutoGroup.addEventListener('click', handleAdminBulkAutoGroup);
-  DOM.adminBulkApplyGroup.addEventListener('click', handleAdminBulkApplyGroup);
   DOM.adminBulkDeleteAll.addEventListener('click', handleAdminBulkDeleteAll);
 
   DOM.auditSearch.addEventListener('input', renderAuditTable);

@@ -511,19 +511,7 @@
 
           <div class="admin-participant-bulk">
             <h4>批量操作（全部參加者）</h4>
-            <div class="form-group">
-              <label for="admin-bulk-group">統一分組 (group_id)</label>
-              <input type="text" id="admin-bulk-group" class="input-field" placeholder="例如 GROUP_1">
-            </div>
             <div class="admin-bulk-actions">
-              <button type="button" id="admin-bulk-auto-group" class="btn btn-primary btn-sm btn-progress">
-                <span class="btn-label">一鍵自動修正全部分組</span>
-                <span class="btn-progress-bar" aria-hidden="true"></span>
-              </button>
-              <button type="button" id="admin-bulk-apply-group" class="btn btn-secondary btn-sm btn-progress">
-                <span class="btn-label">將分組套用到全部</span>
-                <span class="btn-progress-bar" aria-hidden="true"></span>
-              </button>
               <button type="button" id="admin-bulk-delete-all" class="btn btn-danger btn-sm btn-progress">
                 <span class="btn-label">刪除全部參加者紀錄</span>
                 <span class="btn-progress-bar" aria-hidden="true"></span>
@@ -555,7 +543,7 @@
                 </div>
                 <div class="form-group">
                   <label for="admin-edit-group">分組 (group_id)</label>
-                  <input type="text" id="admin-edit-group" class="input-field" placeholder="例如 GROUP_1">
+                  <select id="admin-edit-group" class="input-field"></select>
                 </div>
               </div>
               <button type="button" id="admin-save-participant" class="btn btn-primary btn-sm btn-progress">
