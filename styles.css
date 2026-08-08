@@ -1820,11 +1820,15 @@ textarea.input-field {
   font: inherit;
   color: inherit;
   text-align: left;
-  cursor: pointer;
+  cursor: default;
   -webkit-tap-highlight-color: transparent;
 }
 
-.group-voter-header:hover {
+button.group-voter-header {
+  cursor: pointer;
+}
+
+button.group-voter-header:hover {
   background: color-mix(in srgb, var(--secondary) 6%, transparent);
 }
 
@@ -1843,20 +1847,6 @@ textarea.input-field {
   font-size: 13px;
 }
 
-.group-voter-chevron {
-  width: 0.45rem;
-  height: 0.45rem;
-  border-right: 1.5px solid var(--text-muted);
-  border-bottom: 1.5px solid var(--text-muted);
-  transform: rotate(-45deg);
-  transition: transform 0.18s ease;
-  flex-shrink: 0;
-}
-
-.group-voter-card.is-open .group-voter-chevron {
-  transform: rotate(45deg);
-}
-
 .group-voter-count {
   font-size: 11px;
   font-weight: 700;
@@ -1866,11 +1856,6 @@ textarea.input-field {
 
 .group-voter-body {
   border-top: 1px solid var(--border-light);
-}
-
-.group-voter-body[hidden],
-.group-voter-body.hidden {
-  display: none;
 }
 
 .group-voter-members {
