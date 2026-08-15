@@ -210,7 +210,7 @@ const ONBOARDING_STEPS = {
       target: '[data-tour="send-content"]',
       prepare: 'send',
       title: '留言內容',
-      body: '最多 300 字。有唔恰當字眼會提示你改。'
+      body: '最多 300 字。唔可以加 emoji；有唔恰當字眼亦會提示你改。'
     },
     {
       target: '[data-tour="send-submit"]',
@@ -1041,6 +1041,21 @@ function launchConfetti() {
 function containsBadWords(text) {
   const lower = text.toLowerCase();
   return BAD_WORDS.some(word => lower.includes(word.toLowerCase()));
+}
+
+/** Ban emoji / pictographs in participant messages (flags, keycaps, ZWJ sequences). */
+function containsEmoji(text) {
+  const s = String(text || '');
+  return /\p{Extended_Pictographic}/u.test(s)
+    || /\p{Regional_Indicator}{2}/u.test(s)
+    || /[#*0-9]\uFE0F?\u20E3/u.test(s);
+}
+
+/** Returns a user-facing reason when message content must be rejected, else ''. */
+function messageContentBlockReason(text) {
+  if (containsEmoji(text)) return '內容不可包含 emoji，請移除後再發送';
+  if (containsBadWords(text)) return '內容包含不適當用語，請修改後再發送';
+  return '';
 }
 
 function runProgressButton(btn, promise) {
@@ -2614,11 +2629,14 @@ function updateCharCounter() {
   DOM.charCounter.classList.toggle('warn', len >= CONFIG.CHAR_WARN_THRESHOLD && len <= CONFIG.MAX_MESSAGE_LENGTH);
   DOM.charCounter.classList.toggle('over', len > CONFIG.MAX_MESSAGE_LENGTH);
 
-  const hasBad = containsBadWords(DOM.sendContent.value);
-  DOM.badWordsWarning.classList.toggle('hidden', !hasBad);
+  const blockReason = messageContentBlockReason(DOM.sendContent.value);
+  if (DOM.badWordsWarning) {
+    DOM.badWordsWarning.textContent = blockReason || '內容包含不適當用語，請修改後再發送';
+    DOM.badWordsWarning.classList.toggle('hidden', !blockReason);
+  }
   const empty = !DOM.sendContent.value.trim();
   const messagingOpen = isMessagingOpenForMe();
-  DOM.sendSubmit.disabled = hasBad || !messagingOpen || empty;
+  DOM.sendSubmit.disabled = !!blockReason || !messagingOpen || empty;
 }
 
 async function handleSendMessage(e) {
@@ -2633,7 +2651,8 @@ async function handleSendMessage(e) {
 
   if (!receiverId) { showToast('請選擇接收者', 'error'); return; }
   if (!content) { showToast('請輸入留言內容', 'error'); return; }
-  if (containsBadWords(content)) { showToast('內容包含不適當用語', 'error'); return; }
+  const blockReason = messageContentBlockReason(content);
+  if (blockReason) { showToast(blockReason, 'error'); return; }
 
   const sender = findParticipantById(state.participantId);
   const receiver = findParticipantById(receiverId);
