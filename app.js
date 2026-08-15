@@ -1193,6 +1193,12 @@ function isStaffPerson(pOrId) {
   return !!id && !isSeatParticipantId(id) && !isAdminLogin(id);
 }
 
+/** Seats and Staff can be force-logged out; Admin cannot. */
+function canForceLogoutParticipantId(participantId) {
+  const id = normalizeId(participantId);
+  return !!id && !isAdminLogin(id) && (isSeatParticipantId(id) || isStaffPerson(id));
+}
+
 function isNumberedGroupId(groupId) {
   return /^GROUP_\d+$/i.test(String(groupId || '').trim());
 }
@@ -3798,7 +3804,7 @@ function closeVoteMatrixModal() {
 
 function openForceLogoutModal(participantId) {
   const pid = normalizeId(participantId);
-  if (!pid || !DOM.forceLogoutModal) return;
+  if (!canForceLogoutParticipantId(pid) || !DOM.forceLogoutModal) return;
   state.adminForceLogoutTarget = pid;
   if (DOM.forceLogoutBody) {
     DOM.forceLogoutBody.textContent = `確定要強制登出 ${pid} 嗎？`;
@@ -4229,7 +4235,7 @@ function renderAdminLoginStatus() {
       </div>
     `,
     onMemberClick: participantId => openForceLogoutModal(participantId),
-    canMemberClick: member => isSeatParticipantId(member.participant_id),
+    canMemberClick: member => canForceLogoutParticipantId(member.participant_id),
     afterRender: container => {
       const refreshBtn = container.querySelector('#admin-refresh-login-status');
       if (refreshBtn) {
@@ -4659,7 +4665,11 @@ function renderStaffLoginStatus() {
       </div>
     `,
     onMemberClick: participantId => openForceLogoutModal(participantId),
-    canMemberClick: member => isSeatParticipantId(member.participant_id),
+    canMemberClick: member => {
+      const id = normalizeId(member.participant_id);
+      // Facilitators stay signed in so they can keep managing the group.
+      return canForceLogoutParticipantId(id) && id !== normalizeId(state.participantId);
+    },
     afterRender: container => {
       const refreshBtn = container.querySelector('#staff-refresh-login-status');
       if (refreshBtn) {
@@ -4777,9 +4787,10 @@ async function handleStaffRefreshLoginStatus(btn) {
 }
 
 async function handleStaffForceLogoutGroup() {
+  const selfId = normalizeId(state.participantId);
   const ids = getFacilitatorGroupMembers()
     .map(p => normalizeId(p.participant_id))
-    .filter(id => !!id && isSeatParticipantId(id));
+    .filter(id => canForceLogoutParticipantId(id) && id !== selfId);
   const loggedIn = ids.filter(id => {
     const presence = state.presence.find(p => p.participant_id === id);
     return isPresenceCurrentlyLoggedIn(presence);
@@ -4788,7 +4799,7 @@ async function handleStaffForceLogoutGroup() {
     showToast('本組目前沒有已登入參加者', 'info');
     return;
   }
-  if (!window.confirm('確定要強制登出本組 ' + loggedIn.length + ' 位已登入參加者嗎？Staff 不受影響。')) return;
+  if (!window.confirm('確定要強制登出本組 ' + loggedIn.length + ' 位已登入參加者嗎？（你自己不會被登出）')) return;
   try {
     await data.forceLogoutParticipants(loggedIn);
     removeLocalPresence(loggedIn);
@@ -5101,7 +5112,7 @@ async function handleAdminSaveParticipant() {
 
 async function handleAdminForceLogoutParticipant(participantId, btn) {
   const pid = normalizeId(participantId);
-  if (!pid) return;
+  if (!canForceLogoutParticipantId(pid)) return;
 
   const action = async () => {
     await data.forceLogoutParticipant(pid);
@@ -5125,10 +5136,12 @@ async function handleAdminForceLogoutParticipant(participantId, btn) {
 }
 
 async function handleAdminForceLogoutAll() {
+  // Kick seats and Staff (e.g. WILL). Login lockout below still applies to
+  // seats only — Staff may sign back in immediately.
   const ids = state.presence
     .filter(p => isPresenceCurrentlyLoggedIn(p))
     .map(p => normalizeId(p.participant_id))
-    .filter(id => !!id && isSeatParticipantId(id));
+    .filter(id => canForceLogoutParticipantId(id));
   if (!ids.length) {
     showToast('目前沒有已登入參加者', 'info');
     return;
