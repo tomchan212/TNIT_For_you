@@ -192,7 +192,7 @@
           </div>
           <div class="form-group" data-tour="send-content">
             <label for="send-content">留言內容 <span id="char-counter" class="char-counter">0/300</span></label>
-            <textarea id="send-content" class="input-field" maxlength="300" rows="5" placeholder="寫下你想說的話…"></textarea>
+            <textarea id="send-content" class="input-field" maxlength="300" rows="5" placeholder="寫下你想說的話…（請勿使用 emoji）"></textarea>
             <p id="bad-words-warning" class="form-hint form-hint-danger hidden">內容包含不適當用語，請修改後再發送</p>
           </div>
           <button type="submit" id="send-submit" class="btn btn-primary btn-lg btn-progress" data-tour="send-submit">
@@ -553,7 +553,7 @@
   <div id="force-logout-all-modal" class="modal-overlay glass-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="force-logout-all-title">
     <div class="modal-card glass-card force-logout-modal-card">
       <h2 id="force-logout-all-title">全部強制登出</h2>
-      <p class="trophy-modal-subtitle">Staff / Admin 不受限制。請設定參加者幾點先可以重新登入。</p>
+      <p class="trophy-modal-subtitle">會登出所有已登入座位與 Staff（例如 WILL）。重新登入時間只限制座位參加者；Staff 可立即再登入，Admin 不受影響。</p>
       <div class="form-group">
         <label for="force-logout-all-time">重新登入時間</label>
         <input type="time" id="force-logout-all-time" class="input-field" step="60">

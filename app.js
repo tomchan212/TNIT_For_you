@@ -212,7 +212,7 @@ const ONBOARDING_STEPS = {
       target: '[data-tour="send-content"]',
       prepare: 'send',
       title: '留言內容',
-      body: '最多 300 字。有唔恰當字眼會提示你改。'
+      body: '最多 300 字。唔可以加 emoji；有唔恰當字眼亦會提示你改。'
     },
     {
       target: '[data-tour="send-submit"]',
@@ -1120,6 +1120,21 @@ function containsBadWords(text) {
   return BAD_WORDS.some(word => lower.includes(word.toLowerCase()));
 }
 
+/** Ban emoji / pictographs in participant messages (flags, keycaps, ZWJ sequences). */
+function containsEmoji(text) {
+  const s = String(text || '');
+  return /\p{Extended_Pictographic}/u.test(s)
+    || /\p{Regional_Indicator}{2}/u.test(s)
+    || /[#*0-9]\uFE0F?\u20E3/u.test(s);
+}
+
+/** Returns a user-facing reason when message content must be rejected, else ''. */
+function messageContentBlockReason(text) {
+  if (containsEmoji(text)) return '內容不可包含 emoji，請移除後再發送';
+  if (containsBadWords(text)) return '內容包含不適當用語，請修改後再發送';
+  return '';
+}
+
 function runProgressButton(btn, promise) {
   btn.classList.add('is-loading');
   btn.disabled = true;
@@ -1301,6 +1316,12 @@ function isStaffPerson(pOrId) {
     ? pOrId
     : (pOrId && pOrId.participant_id) || '';
   return !!id && !isSeatParticipantId(id) && !isAdminLogin(id);
+}
+
+/** Seats and Staff can be force-logged out; Admin cannot. */
+function canForceLogoutParticipantId(participantId) {
+  const id = normalizeId(participantId);
+  return !!id && !isAdminLogin(id) && (isSeatParticipantId(id) || isStaffPerson(id));
 }
 
 function isNumberedGroupId(groupId) {
@@ -2839,11 +2860,14 @@ function updateCharCounter() {
   DOM.charCounter.classList.toggle('warn', len >= CONFIG.CHAR_WARN_THRESHOLD && len <= CONFIG.MAX_MESSAGE_LENGTH);
   DOM.charCounter.classList.toggle('over', len > CONFIG.MAX_MESSAGE_LENGTH);
 
-  const hasBad = containsBadWords(DOM.sendContent.value);
-  DOM.badWordsWarning.classList.toggle('hidden', !hasBad);
+  const blockReason = messageContentBlockReason(DOM.sendContent.value);
+  if (DOM.badWordsWarning) {
+    DOM.badWordsWarning.textContent = blockReason || '內容包含不適當用語，請修改後再發送';
+    DOM.badWordsWarning.classList.toggle('hidden', !blockReason);
+  }
   const empty = !DOM.sendContent.value.trim();
   const messagingOpen = isMessagingOpenForMe();
-  DOM.sendSubmit.disabled = hasBad || !messagingOpen || empty;
+  DOM.sendSubmit.disabled = !!blockReason || !messagingOpen || empty;
 }
 
 async function handleSendMessage(e) {
@@ -2858,7 +2882,8 @@ async function handleSendMessage(e) {
 
   if (!receiverId) { showToast('請選擇接收者', 'error'); return; }
   if (!content) { showToast('請輸入留言內容', 'error'); return; }
-  if (containsBadWords(content)) { showToast('內容包含不適當用語', 'error'); return; }
+  const blockReason = messageContentBlockReason(content);
+  if (blockReason) { showToast(blockReason, 'error'); return; }
 
   const sender = findParticipantById(state.participantId);
   const receiver = findParticipantById(receiverId);
@@ -4165,7 +4190,7 @@ function closeVoteMatrixModal() {
 
 function openForceLogoutModal(participantId) {
   const pid = normalizeId(participantId);
-  if (!pid || !DOM.forceLogoutModal) return;
+  if (!canForceLogoutParticipantId(pid) || !DOM.forceLogoutModal) return;
   state.adminForceLogoutTarget = pid;
   if (DOM.forceLogoutBody) {
     DOM.forceLogoutBody.textContent = `確定要強制登出 ${pid} 嗎？`;
@@ -4601,7 +4626,7 @@ function renderAdminLoginStatus() {
       </div>
     `,
     onMemberClick: participantId => openForceLogoutModal(participantId),
-    canMemberClick: member => isSeatParticipantId(member.participant_id),
+    canMemberClick: member => canForceLogoutParticipantId(member.participant_id),
     afterRender: container => {
       const refreshBtn = container.querySelector('#admin-refresh-login-status');
       if (refreshBtn) {
@@ -5091,7 +5116,11 @@ function renderStaffLoginStatus() {
       </div>
     `,
     onMemberClick: participantId => openForceLogoutModal(participantId),
-    canMemberClick: member => isSeatParticipantId(member.participant_id),
+    canMemberClick: member => {
+      const id = normalizeId(member.participant_id);
+      // Facilitators stay signed in so they can keep managing the group.
+      return canForceLogoutParticipantId(id) && id !== normalizeId(state.participantId);
+    },
     afterRender: container => {
       const refreshBtn = container.querySelector('#staff-refresh-login-status');
       if (refreshBtn) {
@@ -5211,9 +5240,10 @@ async function handleStaffRefreshLoginStatus(btn) {
 }
 
 async function handleStaffForceLogoutGroup() {
+  const selfId = normalizeId(state.participantId);
   const ids = getFacilitatorGroupMembers()
     .map(p => normalizeId(p.participant_id))
-    .filter(id => !!id && isSeatParticipantId(id));
+    .filter(id => canForceLogoutParticipantId(id) && id !== selfId);
   const loggedIn = ids.filter(id => {
     const presence = state.presence.find(p => p.participant_id === id);
     return isPresenceCurrentlyLoggedIn(presence);
@@ -5222,7 +5252,7 @@ async function handleStaffForceLogoutGroup() {
     showToast('本組目前沒有已登入參加者', 'info');
     return;
   }
-  if (!window.confirm('確定要強制登出本組 ' + loggedIn.length + ' 位已登入參加者嗎？Staff 不受影響。')) return;
+  if (!window.confirm('確定要強制登出本組 ' + loggedIn.length + ' 位已登入參加者嗎？（你自己不會被登出）')) return;
   try {
     await data.forceLogoutParticipants(loggedIn);
     removeLocalPresence(loggedIn);
@@ -5560,7 +5590,7 @@ async function handleAdminSaveParticipant() {
 
 async function handleAdminForceLogoutParticipant(participantId, btn) {
   const pid = normalizeId(participantId);
-  if (!pid) return;
+  if (!canForceLogoutParticipantId(pid)) return;
 
   const action = async () => {
     await data.forceLogoutParticipant(pid);
@@ -5584,10 +5614,12 @@ async function handleAdminForceLogoutParticipant(participantId, btn) {
 }
 
 async function handleAdminForceLogoutAll() {
+  // Kick seats and Staff (e.g. WILL). Login lockout below still applies to
+  // seats only — Staff may sign back in immediately.
   const ids = state.presence
     .filter(p => isPresenceCurrentlyLoggedIn(p))
     .map(p => normalizeId(p.participant_id))
-    .filter(id => !!id && isSeatParticipantId(id));
+    .filter(id => canForceLogoutParticipantId(id));
   if (!ids.length) {
     showToast('目前沒有已登入參加者', 'info');
     return;
