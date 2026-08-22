@@ -1,0 +1,202 @@
+{
+  "generated_at": "2026-08-06T13:13:57+00:00",
+  "count": 49,
+  "participants": [
+    {
+      "participant_id": "1A",
+      "group_id": "GROUP_1"
+    },
+    {
+      "participant_id": "1B",
+      "group_id": "GROUP_1"
+    },
+    {
+      "participant_id": "1C",
+      "group_id": "GROUP_1"
+    },
+    {
+      "participant_id": "1D",
+      "group_id": "GROUP_1"
+    },
+    {
+      "participant_id": "1E",
+      "group_id": "GROUP_1"
+    },
+    {
+      "participant_id": "1F",
+      "group_id": "GROUP_1"
+    },
+    {
+      "participant_id": "2A",
+      "group_id": "GROUP_2"
+    },
+    {
+      "participant_id": "2B",
+      "group_id": "GROUP_2"
+    },
+    {
+      "participant_id": "2C",
+      "group_id": "GROUP_2"
+    },
+    {
+      "participant_id": "2D",
+      "group_id": "GROUP_2"
+    },
+    {
+      "participant_id": "2E",
+      "group_id": "GROUP_2"
+    },
+    {
+      "participant_id": "2F",
+      "group_id": "GROUP_2"
+    },
+    {
+      "participant_id": "3A",
+      "group_id": "GROUP_3"
+    },
+    {
+      "participant_id": "3B",
+      "group_id": "GROUP_3"
+    },
+    {
+      "participant_id": "3C",
+      "group_id": "GROUP_3"
+    },
+    {
+      "participant_id": "3D",
+      "group_id": "GROUP_3"
+    },
+    {
+      "participant_id": "3E",
+      "group_id": "GROUP_3"
+    },
+    {
+      "participant_id": "3F",
+      "group_id": "GROUP_3"
+    },
+    {
+      "participant_id": "4A",
+      "group_id": "GROUP_4"
+    },
+    {
+      "participant_id": "4B",
+      "group_id": "GROUP_4"
+    },
+    {
+      "participant_id": "4C",
+      "group_id": "GROUP_4"
+    },
+    {
+      "participant_id": "4D",
+      "group_id": "GROUP_4"
+    },
+    {
+      "participant_id": "4E",
+      "group_id": "GROUP_4"
+    },
+    {
+      "participant_id": "4F",
+      "group_id": "GROUP_4"
+    },
+    {
+      "participant_id": "5A",
+      "group_id": "GROUP_5"
+    },
+    {
+      "participant_id": "5B",
+      "group_id": "GROUP_5"
+    },
+    {
+      "participant_id": "5C",
+      "group_id": "GROUP_5"
+    },
+    {
+      "participant_id": "5D",
+      "group_id": "GROUP_5"
+    },
+    {
+      "participant_id": "5E",
+      "group_id": "GROUP_5"
+    },
+    {
+      "participant_id": "5F",
+      "group_id": "GROUP_5"
+    },
+    {
+      "participant_id": "6A",
+      "group_id": "GROUP_6"
+    },
+    {
+      "participant_id": "6B",
+      "group_id": "GROUP_6"
+    },
+    {
+      "participant_id": "6C",
+      "group_id": "GROUP_6"
+    },
+    {
+      "participant_id": "6D",
+      "group_id": "GROUP_6"
+    },
+    {
+      "participant_id": "6E",
+      "group_id": "GROUP_6"
+    },
+    {
+      "participant_id": "6F",
+      "group_id": "GROUP_6"
+    },
+    {
+      "participant_id": "BRO",
+      "group_id": "GROUP_STAFF"
+    },
+    {
+      "participant_id": "CHERYL",
+      "group_id": "GROUP_STAFF"
+    },
+    {
+      "participant_id": "CHUNJAI",
+      "group_id": "GROUP_STAFF"
+    },
+    {
+      "participant_id": "IRENE",
+      "group_id": "GROUP_STAFF"
+    },
+    {
+      "participant_id": "KAKA",
+      "group_id": "GROUP_STAFF"
+    },
+    {
+      "participant_id": "KAYI",
+      "group_id": "GROUP_STAFF"
+    },
+    {
+      "participant_id": "KELLY",
+      "group_id": "GROUP_STAFF"
+    },
+    {
+      "participant_id": "PHOEBE",
+      "group_id": "GROUP_STAFF"
+    },
+    {
+      "participant_id": "QQ",
+      "group_id": "GROUP_STAFF"
+    },
+    {
+      "participant_id": "RENAE",
+      "group_id": "GROUP_STAFF"
+    },
+    {
+      "participant_id": "RIGHT",
+      "group_id": "GROUP_STAFF"
+    },
+    {
+      "participant_id": "WILL",
+      "group_id": "GROUP_STAFF"
+    },
+    {
+      "participant_id": "WINGLAM",
+      "group_id": "GROUP_STAFF"
+    }
+  ]
+}

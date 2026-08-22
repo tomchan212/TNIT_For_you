@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
+  <meta name="theme-color" content="#FFF9F2">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="TNIT">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>HKCYS TNIT — Just For You</title>
+  <!-- build f6ec941 -->
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="assets/heart.png">
+  <link rel="preload" href="fonts/CanvaHandwritingStyleTC.woff2?v=f6ec941" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="styles.css?v=f6ec941">
+</head>
+<body>
+
+  <!-- ═══ SPLASH SCREEN ═══ -->
+  <section id="screen-splash" class="screen screen-splash" aria-label="啟動畫面" aria-busy="true">
+    <div class="splash-content">
+      <div class="splash-logo" aria-hidden="true">
+        <div class="splash-heart app-icon app-icon-heart" aria-hidden="true"></div>
+      </div>
+      <h1 class="splash-title">HKCYS TNIT</h1>
+      <p class="splash-subtitle">Just For You <span class="app-icon app-icon-heart inline-icon" aria-hidden="true"></span></p>
+      <p class="splash-loading-text">載入中… <span id="splash-percent" class="loading-percent">0%</span></p>
+      <p id="splash-status" class="splash-status" role="status" aria-live="polite">準備啟動…</p>
+      <div class="loading-bar splash-loading-bar" aria-hidden="true">
+        <div id="splash-bar-fill" class="loading-bar-fill"></div>
+      </div>
+      <div class="splash-loader" role="status" aria-label="載入中">
+        <div class="splash-loader-dot"></div>
+        <div class="splash-loader-dot"></div>
+        <div class="splash-loader-dot"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Global Loading Overlay -->
+  <div id="loading-overlay" class="loading-overlay hidden" aria-hidden="true" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="載入中">
+    <div class="skeleton-pulse"></div>
+    <p class="loading-text">載入中… <span id="loading-percent" class="loading-percent">0%</span></p>
+    <div class="loading-bar" aria-hidden="true">
+      <div id="loading-bar-fill" class="loading-bar-fill"></div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+  <div id="alert-banner" class="alert-banner hidden" role="alert">
+    <button type="button" id="alert-banner-main" class="alert-banner-main">
+      <strong id="alert-banner-title">通知</strong>
+      <span id="alert-banner-body"></span>
+    </button>
+    <button type="button" id="alert-banner-close" class="alert-banner-close" aria-label="關閉">×</button>
+  </div>
+
+  <!-- Confetti Canvas -->
+  <canvas id="confetti-canvas" class="confetti-canvas" aria-hidden="true"></canvas>
+
+  <!-- ═══ LOGIN SCREEN ═══ -->
+  <section id="screen-login" class="screen hidden" aria-label="登入">
+    <div class="screen-inner login-inner">
+      <header class="login-header">
+        <div class="brand-mark" aria-hidden="true">
+          <span class="brand-icon app-icon app-icon-heart" aria-hidden="true"></span>
+        </div>
+        <h1 class="app-title">HKCYS TNIT</h1>
+        <p class="app-subtitle">Just For You <span class="app-icon app-icon-heart inline-icon" aria-hidden="true"></span></p>
+        <p class="login-welcome">歡迎回來，請登入以繼續</p>
+      </header>
+
+      <div id="login-a2hs-banner" class="a2hs-banner">
+        <div class="a2hs-banner-copy">
+          <strong>建議加到主畫面</strong>
+          <span>全螢幕開啟會更清楚，唔使瀏覽器工具列擋住。</span>
+        </div>
+        <button type="button" id="login-add-home" class="btn btn-primary btn-sm">加入主畫面</button>
+      </div>
+
+      <form id="login-form" class="login-form" novalidate>
+        <div class="form-group">
+          <label for="login-participant">參加者編號</label>
+          <div class="combobox-wrapper" id="login-combobox">
+            <input type="text" id="login-participant" class="combobox-input input-field" autocomplete="off"
+              autocapitalize="characters" placeholder="輸入或選擇編號" aria-autocomplete="list"
+              aria-controls="login-dropdown" aria-expanded="false" role="combobox">
+            <button type="button" id="login-combobox-toggle" class="combobox-toggle" aria-label="展開選單">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            <ul id="login-dropdown" class="combobox-dropdown hidden" role="listbox"></ul>
+          </div>
+          <p id="login-no-match" class="form-hint hidden">找不到匹配的參加者</p>
+        </div>
+
+        <div class="form-group">
+          <label for="login-phone">密碼</label>
+          <div class="input-with-action" id="login-phone-wrap">
+            <input type="text" id="login-phone" class="input-field input-with-action-field" autocomplete="current-password"
+              autocapitalize="none" autocapitalise="none" placeholder=""
+              inputmode="text">
+            <button type="button" id="login-numpad-toggle" class="input-action-btn" aria-label="開啟數字鍵盤"
+              aria-pressed="false" title="開啟數字鍵盤">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <rect x="3" y="3" width="5" height="5" rx="1"/>
+                <rect x="10" y="3" width="5" height="5" rx="1"/>
+                <rect x="17" y="3" width="5" height="5" rx="1"/>
+                <rect x="3" y="10" width="5" height="5" rx="1"/>
+                <rect x="10" y="10" width="5" height="5" rx="1"/>
+                <rect x="17" y="10" width="5" height="5" rx="1"/>
+                <rect x="3" y="17" width="5" height="5" rx="1"/>
+                <rect x="10" y="17" width="12" height="5" rx="1"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div id="login-status-banner" class="status-banner hidden" role="status"></div>
+
+        <button type="submit" id="login-submit" class="btn btn-primary btn-lg btn-progress">
+          <span class="btn-label">登入</span>
+          <span class="btn-progress-bar" aria-hidden="true"></span>
+        </button>
+      </form>
+
+      <footer class="login-footer">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+        <span>您的身份受到保護，留言完全匿名</span>
+      </footer>
+    </div>
+  </section>
+
+  <!-- ═══ PARTICIPANT APP ═══ -->
+  <section id="screen-participant" class="screen screen-app hidden" aria-label="參加者主頁">
+    <header class="app-header" data-tour="participant-greeting">
+      <div class="app-header-content">
+        <h1 id="participant-greeting" class="greeting-text">你好 <span class="app-icon app-icon-wave inline-icon" aria-hidden="true"></span></h1>
+        <p id="participant-subgreeting" class="greeting-sub">Just For You <span class="app-icon app-icon-heart inline-icon" aria-hidden="true"></span></p>
+      </div>
+      <button type="button" class="btn btn-ghost btn-icon page-help-btn" aria-label="本頁說明" title="本頁說明">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="9"/>
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+          <line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+      </button>
+    </header>
+
+    <main class="app-main">
+      <!-- Home -->
+      <div id="view-home" class="app-view active" data-view="home">
+        <div id="home-unassigned-banner" class="empty-state empty-illustration hidden" data-tour="home-unassigned">
+          <div class="illustration-circle"><span class="app-icon app-icon-profile" aria-hidden="true"></span></div>
+          <h3>你尚未分配組別</h3>
+          <p>請等候工作人員為你分配組別。分配完成前無法使用留言同投票功能。</p>
+        </div>
+        <div class="home-cards">
+          <button type="button" class="home-card" data-nav="send">
+            <span class="home-card-icon app-icon app-icon-loveletter" aria-hidden="true"></span>
+            <span class="home-card-label">匿名留言</span>
+            <span class="home-card-desc">寫多啲感受同具體事情</span>
+          </button>
+          <button type="button" class="home-card" data-nav="inbox">
+            <span class="home-card-icon app-icon app-icon-inbox" aria-hidden="true"></span>
+            <span class="home-card-label">收件箱</span>
+            <span class="home-card-desc">查看收到的留言</span>
+            <span id="home-inbox-badge" class="home-card-badge hidden">0</span>
+          </button>
+          <button type="button" class="home-card" data-nav="trophy" data-staff-hide="vote">
+            <span class="home-card-icon app-icon app-icon-trophy" aria-hidden="true"></span>
+            <span class="home-card-label">獎項配對</span>
+            <span class="home-card-desc">為隊友投票</span>
+          </button>
+          <button type="button" class="home-card" data-nav="sent">
+            <span class="home-card-icon app-icon app-icon-outbox" aria-hidden="true"></span>
+            <span class="home-card-label">已發送</span>
+            <span class="home-card-desc">查看已發留言</span>
+          </button>
+          <button type="button" id="home-staff-card" class="home-card hidden" data-nav="staff">
+            <span class="home-card-icon app-icon app-icon-chat" aria-hidden="true"></span>
+            <span class="home-card-label">本組管理</span>
+            <span class="home-card-desc">登入／投票／留言監控</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Send Message -->
+      <div id="view-send" class="app-view hidden" data-view="send">
+        <div class="view-toolbar">
+          <button type="button" class="btn btn-ghost btn-icon back-btn" data-back="home" aria-label="返回">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
+          </button>
+          <h2 class="view-title">匿名留言</h2>
+        </div>
+        <div id="send-closed-state" class="empty-state empty-illustration hidden">
+          <div class="illustration-circle"><span class="app-icon app-icon-sleep" aria-hidden="true"></span></div>
+          <h3>留言功能暫停</h3>
+          <p>管理員已暫時關閉留言功能，請稍後再試</p>
+        </div>
+        <div id="send-closed-banner" class="status-banner status-banner-warning hidden" role="alert"></div>
+        <div class="send-guide card" data-tour="send-guide">
+          <h3 class="send-guide-title">寫留言小提示</h3>
+          <ul class="send-guide-list">
+            <li>對方收唔到你係邊個，可以放心講真話。</li>
+            <li><strong>寫多啲、寫具體啲</strong>：唔好得「加油／多謝」一句。可以講你欣賞對方咩、邊件事令你記得、你學到或感受到咩。</li>
+            <li><strong>有需要就即刻搵 TNIT Staff 幫手</strong>：寫唔出、睇唔明、或者想有人陪住寫，都得。</li>
+          </ul>
+        </div>
+        <form id="send-form" class="send-form card" data-tour="send-form">
+          <div class="form-group" data-tour="send-receiver">
+            <label for="send-receiver">接收者</label>
+            <div class="combobox-wrapper" id="send-combobox">
+              <input type="text" id="send-receiver" class="combobox-input input-field" autocomplete="off"
+                autocapitalize="characters" placeholder="搜尋同組接收者" aria-autocomplete="list"
+                aria-controls="send-dropdown" aria-expanded="false" role="combobox">
+              <button type="button" id="send-combobox-toggle" class="combobox-toggle" aria-label="展開選單">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+              </button>
+              <ul id="send-dropdown" class="combobox-dropdown hidden" role="listbox"></ul>
+            </div>
+          </div>
+          <div class="form-group" data-tour="send-content">
+            <label for="send-content">留言內容 <span id="char-counter" class="char-counter">0/300</span></label>
+            <textarea id="send-content" class="input-field" maxlength="300" rows="6" placeholder="例如：今日你……令我好記得，因為……我學到／感受到……"></textarea>
+            <p id="bad-words-warning" class="form-hint form-hint-danger hidden">內容包含不適當用語，請修改後再發送</p>
+            <p id="emoji-warning" class="form-hint form-hint-danger hidden">內容包含 emoji，請移除後再提交</p>
+          </div>
+          <button type="submit" id="send-submit" class="btn btn-primary btn-lg btn-progress" data-tour="send-submit">
+            <span class="btn-label">發送留言</span>
+            <span class="btn-progress-bar" aria-hidden="true"></span>
+          </button>
+        </form>
+      </div>
+
+      <!-- Inbox -->
+      <div id="view-inbox" class="app-view hidden" data-view="inbox">
+        <div class="view-toolbar" data-tour="inbox-toolbar">
+          <h2 class="view-title">收件箱</h2>
+          <button type="button" id="inbox-refresh" class="btn btn-ghost btn-sm btn-progress" aria-label="重新整理">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/>
+            </svg>
+          </button>
+        </div>
+        <div id="inbox-list" class="message-list" data-tour="inbox-list"></div>
+        <div id="inbox-empty" class="empty-state empty-illustration hidden" data-tour="inbox-empty">
+          <div class="illustration-circle"><span class="app-icon app-icon-mailbox" aria-hidden="true"></span></div>
+          <h3>收件箱是空的</h3>
+          <p>當有人給你留言時，會在這裡顯示</p>
+        </div>
+      </div>
+
+      <!-- Sent -->
+      <div id="view-sent" class="app-view hidden" data-view="sent">
+        <div class="view-toolbar" data-tour="sent-toolbar">
+          <button type="button" class="btn btn-ghost btn-icon back-btn" data-back="home" aria-label="返回">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
+          </button>
+          <h2 class="view-title">已發送</h2>
+          <button type="button" id="sent-refresh" class="btn btn-ghost btn-sm btn-progress" aria-label="重新整理">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/>
+            </svg>
+          </button>
+        </div>
+        <div id="sent-list" class="message-list" data-tour="sent-list"></div>
+        <div id="sent-empty" class="empty-state empty-illustration hidden" data-tour="sent-empty">
+          <div class="illustration-circle"><span class="app-icon app-icon-envelope" aria-hidden="true"></span></div>
+          <h3>尚未發送任何留言</h3>
+          <p>前往「匿名留言」開始寫給隊友</p>
+        </div>
+      </div>
+
+      <!-- 獎項 -->
+      <div id="view-trophy" class="app-view hidden" data-view="trophy">
+        <div id="trophy-status-banner" class="status-banner hidden" role="status" data-tour="trophy-banner"></div>
+
+        <div id="trophy-guide-bar" class="trophy-guide-bar hidden" data-tour="trophy-guide">
+          <button type="button" id="trophy-guide-open" class="btn btn-secondary btn-sm">
+            獎項摘要
+          </button>
+        </div>
+
+        <div id="trophy-not-open" class="empty-state empty-illustration hidden" data-tour="trophy-not-open">
+          <div class="illustration-circle"><span class="app-icon app-icon-trophy" aria-hidden="true"></span></div>
+          <h3>投票通道尚未開啟</h3>
+          <p>管理員開放投票後，你可以為隊友配對獎項</p>
+        </div>
+
+        <div id="trophy-results-panel" class="trophy-results-panel card hidden" aria-live="polite" data-tour="trophy-results">
+          <div class="trophy-results-header">
+            <span class="trophy-results-icon app-icon app-icon-trophy" aria-hidden="true"></span>
+            <h3 id="trophy-results-title">你的獎項結果</h3>
+          </div>
+          <div id="trophy-results-list" class="trophy-results-list"></div>
+        </div>
+
+          <div id="trophy-voting-section" data-tour="trophy-voting">
+          <div id="trophy-submitted-banner" class="status-banner status-banner-success hidden" role="status">
+            你已提交投票。以下係你嘅配對（不可再改）。
+          </div>
+          <div class="trophy-progress-wrap card" data-tour="trophy-progress">
+            <div class="trophy-progress-label">
+              <span>配對進度</span>
+              <span id="trophy-progress-text">0/0</span>
+            </div>
+            <div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+              <div id="trophy-progress-fill" class="progress-bar-fill" style="width:0%"></div>
+            </div>
+          </div>
+          <div id="trophy-teammates" class="trophy-teammates" data-tour="trophy-teammates"></div>
+          <div id="trophy-empty" class="empty-state empty-illustration hidden">
+            <div class="illustration-circle"><span class="app-icon app-icon-profile" aria-hidden="true"></span></div>
+            <h3>暫無隊友資料</h3>
+            <p>請聯絡管理員確認分組設定</p>
+          </div>
+          <div id="trophy-actions" class="trophy-actions hidden" data-tour="trophy-actions">
+            <button type="button" id="trophy-clear-all" class="btn btn-secondary btn-sm btn-progress">
+              <span class="btn-label">清除全部投票</span>
+              <span class="btn-progress-bar" aria-hidden="true"></span>
+            </button>
+            <button type="button" id="trophy-submit-all" class="btn btn-primary btn-sm btn-progress">
+              <span class="btn-label">提交投票</span>
+              <span class="btn-progress-bar" aria-hidden="true"></span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 獎項提交成功 -->
+      <div id="view-trophy-submitted" class="app-view hidden" data-view="trophy-submitted">
+        <div class="success-state">
+          <div class="success-illustration app-icon app-icon-check" aria-hidden="true"></div>
+          <h2>投票已提交</h2>
+          <p>等待管理員處理結果</p>
+          <div class="success-actions">
+            <button type="button" id="trophy-submitted-view" class="btn btn-secondary btn-lg">查看我的配對</button>
+            <button type="button" id="trophy-submitted-home" class="btn btn-primary btn-lg">返回首頁</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Profile -->
+      <div id="view-profile" class="app-view hidden" data-view="profile">
+        <div class="profile-header card" data-tour="profile-header">
+          <div class="profile-avatar" id="profile-avatar">?</div>
+          <h2 id="profile-name" class="profile-name">—</h2>
+          <span id="profile-group" class="chip chip-secondary">—</span>
+          <p id="profile-login-id" class="form-hint profile-login-id">登入編號：—</p>
+        </div>
+        <div class="card profile-rename-card" data-tour="profile-rename">
+          <h3 class="section-title">顯示名稱</h3>
+          <p class="form-hint">改名後會套用到留言、獎項同名單；登入仍用原本編號。</p>
+          <div class="form-group">
+            <label for="profile-display-name">我的名稱</label>
+            <input type="text" id="profile-display-name" class="input-field" maxlength="40" autocomplete="nickname" placeholder="例如：小明">
+          </div>
+          <button type="button" id="profile-save-name" class="btn btn-primary btn-sm btn-progress">
+            <span class="btn-label">儲存名稱</span>
+            <span class="btn-progress-bar" aria-hidden="true"></span>
+          </button>
+        </div>
+        <div class="card profile-password-card" data-tour="profile-password">
+          <h3 class="section-title">修改密碼</h3>
+          <p class="form-hint">修改後下次登入請使用新密碼。</p>
+          <div class="form-group">
+            <label for="profile-password">新密碼</label>
+            <input type="password" id="profile-password" class="input-field" maxlength="40" autocomplete="new-password" placeholder="請輸入新密碼">
+          </div>
+          <button type="button" id="profile-save-password" class="btn btn-secondary btn-sm btn-progress">
+            <span class="btn-label">更新密碼</span>
+            <span class="btn-progress-bar" aria-hidden="true"></span>
+          </button>
+        </div>
+        <div class="card" data-tour="profile-push">
+          <h3 class="section-title">推送通知</h3>
+          <p class="form-hint">請保持 App 開住（可以收埋去背景，唔好完全關掉），先至收到通知。</p>
+          <p id="profile-push-status" class="form-hint">狀態：檢查中…</p>
+          <div class="toggle-group">
+            <button type="button" id="profile-push-enable" class="btn btn-primary btn-sm btn-progress">
+              <span class="btn-label">開啟通知</span>
+              <span class="btn-progress-bar" aria-hidden="true"></span>
+            </button>
+            <button type="button" id="profile-push-disable" class="btn btn-secondary btn-sm btn-progress">
+              <span class="btn-label">關閉通知</span>
+              <span class="btn-progress-bar" aria-hidden="true"></span>
+            </button>
+            <button type="button" id="profile-push-test" class="btn btn-ghost btn-sm">
+              測試通知
+            </button>
+          </div>
+        </div>
+        <div id="profile-stats" class="profile-stats" data-tour="profile-stats"></div>
+        <button type="button" id="participant-logout" class="btn btn-danger btn-lg" data-tour="profile-logout">登出</button>
+      </div>
+
+      <!-- Staff facilitator: monitor + per-group controls -->
+      <div id="view-staff" class="app-view hidden" data-view="staff">
+        <div class="view-toolbar" data-tour="staff-toolbar">
+          <button type="button" class="btn btn-ghost btn-icon back-btn" data-back="home" aria-label="返回">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
+          </button>
+          <h2 class="view-title">本組管理</h2>
+        </div>
+
+        <div id="staff-facilitator-panel" class="staff-facilitator-panel hidden">
+          <nav class="staff-module-nav" role="tablist" aria-label="本組管理導航">
+            <button type="button" class="bottom-nav-item active" data-staff-section="dashboard" role="tab" aria-selected="true">
+              <span class="bottom-nav-icon app-icon app-icon-chart" aria-hidden="true"></span>
+              <span class="bottom-nav-label">Dashboard</span>
+            </button>
+            <button type="button" class="bottom-nav-item" data-staff-section="messages" role="tab" aria-selected="false">
+              <span class="bottom-nav-icon app-icon app-icon-chat" aria-hidden="true"></span>
+              <span class="bottom-nav-label">Messages</span>
+            </button>
+            <button type="button" class="bottom-nav-item" data-staff-section="voting" role="tab" aria-selected="false">
+              <span class="bottom-nav-icon app-icon app-icon-trophy" aria-hidden="true"></span>
+              <span class="bottom-nav-label">Voting</span>
+            </button>
+            <button type="button" class="bottom-nav-item" data-staff-section="results" role="tab" aria-selected="false">
+              <span class="bottom-nav-icon app-icon app-icon-clipboard" aria-hidden="true"></span>
+              <span class="bottom-nav-label">Results</span>
+            </button>
+          </nav>
+
+          <div id="staff-section-dashboard" class="staff-section active" data-staff-section="dashboard">
+            <div class="card" data-tour="staff-group-card">
+              <h3 class="section-title">負責組別</h3>
+              <p id="staff-group-title" class="staff-group-title">—</p>
+              <div id="staff-group-status" class="status-row"></div>
+              <div class="form-group">
+                <label for="staff-group-name">組別名稱</label>
+                <input type="text" id="staff-group-name" class="input-field" maxlength="40" placeholder="例如：火熱第一組">
+              </div>
+              <button type="button" id="staff-save-group-name" class="btn btn-primary btn-sm btn-progress">
+                <span class="btn-label">儲存組名</span>
+                <span class="btn-progress-bar" aria-hidden="true"></span>
+              </button>
+            </div>
+
+            <div id="staff-dashboard-stats" class="stats-grid" data-tour="staff-stats"></div>
+
+            <div id="staff-login-status" class="admin-pending" data-tour="staff-login-status"></div>
+
+            <div class="card" data-tour="staff-live-load">
+              <h3 class="section-title">即時負載</h3>
+          <div id="staff-live-load" class="stats-grid live-load-grid"></div>
+              <p class="hint-text">只計算你負責嘅組：登入、投票同近幾分鐘留言。</p>
+            </div>
+          </div>
+
+          <div id="staff-section-messages" class="staff-section hidden" data-staff-section="messages">
+            <div class="card" data-tour="staff-message-controls">
+              <h3 class="section-title">本組留言</h3>
+              <p class="form-hint">只影響你負責嘅組；Admin 全域關閉仍然會停用全部組。</p>
+              <div class="toggle-group">
+                <button type="button" id="staff-enable-msg" class="btn btn-success btn-sm btn-progress">
+                  <span class="btn-label">開啟</span>
+                  <span class="btn-progress-bar" aria-hidden="true"></span>
+                </button>
+                <button type="button" id="staff-disable-msg" class="btn btn-danger btn-sm btn-progress">
+                  <span class="btn-label">關閉</span>
+                  <span class="btn-progress-bar" aria-hidden="true"></span>
+                </button>
+              </div>
+            </div>
+
+            <div class="card" data-tour="staff-monitor">
+              <div class="admin-controls">
+                <h3 class="section-title">組內留言監控</h3>
+                <span id="staff-msg-count" class="form-hint">共 0 則</span>
+              </div>
+              <p class="form-hint">即時顯示同組成員之間嘅留言，連發送者同接收者姓名。參加者自己嘅收件箱仍然匿名。</p>
+              <div id="staff-message-list" class="admin-message-list"></div>
+              <div id="staff-msg-empty" class="empty-state empty-illustration">
+                <div class="illustration-circle"><span class="app-icon app-icon-chat" aria-hidden="true"></span></div>
+                <h3>暫無組內留言</h3>
+                <p>組員互傳留言後會即時顯示發送者同接收者</p>
+              </div>
+            </div>
+          </div>
+
+          <div id="staff-section-voting" class="staff-section hidden" data-staff-section="voting">
+            <div id="staff-voting-badge" class="voting-status-badge" data-tour="staff-voting-controls">—</div>
+            <p id="staff-voting-source" class="form-hint staff-voting-source">—</p>
+            <div id="staff-voting-stepper" class="voting-stepper" data-tour="staff-voting-stepper">
+              <div class="stepper-step" data-step="VOTING_OPEN"><span class="stepper-dot"></span><span class="stepper-label">開放投票</span></div>
+              <div class="stepper-line"></div>
+              <div class="stepper-step" data-step="VOTING_CLOSED"><span class="stepper-dot"></span><span class="stepper-label">關閉投票</span></div>
+              <div class="stepper-line"></div>
+              <div class="stepper-step" data-step="CALCULATED"><span class="stepper-dot"></span><span class="stepper-label">計算</span></div>
+              <div class="stepper-line"></div>
+              <div class="stepper-step" data-step="PUBLISHED"><span class="stepper-dot"></span><span class="stepper-label">公布</span></div>
+            </div>
+            <div id="staff-trophy-stats" class="stats-grid" data-tour="staff-voting-stats"></div>
+            <div class="admin-trophy-controls" data-tour="staff-voting-actions">
+              <button type="button" id="staff-open-voting" class="btn btn-success btn-progress">
+                <span class="btn-label">開放投票</span>
+                <span class="btn-progress-bar" aria-hidden="true"></span>
+              </button>
+              <button type="button" id="staff-close-voting" class="btn btn-secondary btn-progress">
+                <span class="btn-label">關閉投票</span>
+                <span class="btn-progress-bar" aria-hidden="true"></span>
+              </button>
+              <button type="button" id="staff-calculate" class="btn btn-primary btn-progress">
+                <span class="btn-label">計算結果</span>
+                <span class="btn-progress-bar" aria-hidden="true"></span>
+              </button>
+              <button type="button" id="staff-publish" class="btn btn-primary btn-progress">
+                <span class="btn-label">公布結果</span>
+                <span class="btn-progress-bar" aria-hidden="true"></span>
+              </button>
+            </div>
+            <button type="button" id="staff-follow-global-voting" class="btn btn-ghost btn-sm staff-follow-global-voting hidden" data-tour="staff-follow-global">
+              恢復跟隨全域投票
+            </button>
+            <div id="staff-pending-voters" class="admin-pending" data-tour="staff-pending-voters"></div>
+          </div>
+
+          <div id="staff-section-results" class="staff-section hidden" data-staff-section="results" data-tour="staff-results">
+            <nav class="sub-tab-nav" role="tablist" aria-label="本組結果檢視" data-tour="staff-result-tabs">
+              <button type="button" class="sub-tab-btn staff-result-tab active" data-staff-result-tab="audit">投票審計</button>
+              <button type="button" class="sub-tab-btn staff-result-tab" data-staff-result-tab="profiles">個人檔案</button>
+              <button type="button" class="sub-tab-btn staff-result-tab" data-staff-result-tab="summary">獎項摘要</button>
+            </nav>
+            <div id="staff-result-audit" class="result-panel active" data-tour="staff-audit-cards">
+              <div id="staff-audit-cards" class="audit-cards"></div>
+            </div>
+            <div id="staff-result-profiles" class="result-panel hidden" data-tour="staff-profiles">
+              <div id="staff-profiles-list" class="profiles-grid"></div>
+            </div>
+            <div id="staff-result-summary" class="result-panel hidden" data-tour="staff-summary">
+              <div id="staff-summary-list" class="summary-list accordion"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <nav class="bottom-nav" role="tablist" aria-label="主要導航">
+      <button type="button" class="bottom-nav-item active" data-tab="home" role="tab" aria-selected="true">
+        <span class="bottom-nav-icon app-icon app-icon-home" aria-hidden="true"></span>
+        <span class="bottom-nav-label">首頁</span>
+      </button>
+      <button type="button" class="bottom-nav-item" data-tab="inbox" role="tab" aria-selected="false">
+        <span class="bottom-nav-icon app-icon app-icon-inbox" aria-hidden="true"></span>
+        <span class="bottom-nav-label">Inbox</span>
+        <span id="inbox-badge" class="bottom-nav-badge hidden">0</span>
+      </button>
+      <button type="button" class="bottom-nav-item" data-tab="trophy" role="tab" aria-selected="false" data-staff-hide="vote">
+        <span class="bottom-nav-icon app-icon app-icon-trophy" aria-hidden="true"></span>
+        <span class="bottom-nav-label">獎項</span>
+      </button>
+      <button type="button" class="bottom-nav-item" data-tab="profile" role="tab" aria-selected="false">
+        <span class="bottom-nav-icon app-icon app-icon-profile" aria-hidden="true"></span>
+        <span class="bottom-nav-label">我的</span>
+      </button>
+    </nav>
+  </section>
+
+  <div id="a2hs-modal" class="modal-overlay glass-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="a2hs-title">
+    <div class="modal-card glass-card a2hs-modal-card">
+      <div class="a2hs-hero app-icon app-icon-home" aria-hidden="true"></div>
+      <h2 id="a2hs-title">加到主畫面</h2>
+      <p id="a2hs-subtitle" class="trophy-modal-subtitle">第一次用？加到主畫面之後全螢幕睇會更清楚。</p>
+      <ol id="a2hs-steps" class="a2hs-steps"></ol>
+      <div class="onboarding-actions">
+        <button type="button" id="a2hs-later" class="btn btn-secondary btn-sm">稍後</button>
+        <button type="button" id="a2hs-install" class="btn btn-primary btn-sm">加入主畫面</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- First-login coach tips (small cards by each feature) -->
+  <div id="onboarding-coach" class="onboarding-coach hidden" aria-hidden="true">
+    <div id="onboarding-dim" class="onboarding-dim" aria-hidden="true"></div>
+    <div id="onboarding-spotlight" class="onboarding-spotlight" aria-hidden="true"></div>
+    <div id="onboarding-tip" class="onboarding-tip glass-card" role="dialog" aria-modal="true" aria-labelledby="onboarding-title">
+      <p id="onboarding-step-label" class="onboarding-step-label">1 / 5</p>
+      <h2 id="onboarding-title" class="onboarding-title">歡迎</h2>
+      <p id="onboarding-body" class="onboarding-body"></p>
+      <div class="onboarding-actions">
+        <button type="button" id="onboarding-prev" class="btn btn-secondary btn-sm">上一步</button>
+        <button type="button" id="onboarding-next" class="btn btn-primary btn-sm">下一步</button>
+      </div>
+      <button type="button" id="onboarding-skip" class="btn btn-ghost btn-sm onboarding-skip">略過</button>
+    </div>
+  </div>
+
+  <!-- Award Popup (Glass) -->
+  <div id="trophy-results-modal" class="modal-overlay glass-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="trophy-results-modal-title">
+    <div class="modal-card glass-card trophy-modal-card">
+      <div class="trophy-modal-celebration app-icon app-icon-party" aria-hidden="true"></div>
+      <h2 id="trophy-results-modal-title">恭喜！</h2>
+      <p class="trophy-modal-subtitle">你獲得：</p>
+      <div id="trophy-results-modal-list" class="trophy-results-list"></div>
+      <button type="button" id="trophy-results-modal-close" class="btn btn-primary btn-lg">太棒了！</button>
+    </div>
+  </div>
+
+  <!-- Admin vote matrix popup -->
+  <div id="vote-matrix-modal" class="modal-overlay glass-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="vote-matrix-modal-title">
+    <div class="modal-card glass-card vote-matrix-modal-card">
+      <div class="vote-matrix-modal-header">
+        <div>
+          <h2 id="vote-matrix-modal-title">投票總覽</h2>
+          <p id="vote-matrix-modal-subtitle" class="vote-matrix-modal-subtitle"></p>
+        </div>
+        <button type="button" id="vote-matrix-modal-close" class="btn btn-ghost btn-icon" aria-label="關閉">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div id="vote-matrix-modal-toolbar" class="vote-matrix-modal-toolbar hidden">
+        <button type="button" id="vote-matrix-modal-back" class="btn btn-secondary btn-sm">返回總覽</button>
+      </div>
+      <div id="vote-matrix-modal-body" class="vote-matrix-modal-body"></div>
+    </div>
+  </div>
+
+  <div id="trophy-guide-modal" class="modal-overlay glass-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="trophy-guide-title">
+    <div class="modal-card glass-card trophy-guide-modal-card">
+      <div class="trophy-guide-modal-header">
+        <div>
+          <h2 id="trophy-guide-title">獎項摘要</h2>
+          <p class="form-hint">了解每個獎項意思</p>
+        </div>
+        <button type="button" id="trophy-guide-close" class="btn btn-ghost btn-icon" aria-label="關閉">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="trophy-deck" id="trophy-deck">
+        <div class="trophy-deck-stack" id="trophy-deck-stack" aria-live="polite"></div>
+      </div>
+      <div class="trophy-deck-controls">
+        <button type="button" id="trophy-deck-prev" class="btn btn-secondary btn-sm" aria-label="上一個">←</button>
+        <span id="trophy-deck-index" class="trophy-deck-index">1 / 8</span>
+        <button type="button" id="trophy-deck-next" class="btn btn-primary btn-sm" aria-label="下一個">→</button>
+      </div>
+      <button type="button" id="trophy-deck-export-pdf" class="btn btn-secondary btn-sm btn-progress trophy-deck-export">
+        <span class="btn-label">匯出撲克卡 PDF</span>
+        <span class="btn-progress-bar" aria-hidden="true"></span>
+      </button>
+    </div>
+  </div>
+
+  <div id="confirm-modal" class="modal-overlay glass-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title">
+    <div class="modal-card glass-card confirm-modal-card">
+      <h2 id="confirm-modal-title">確認</h2>
+      <p id="confirm-modal-body" class="trophy-modal-subtitle confirm-modal-body"></p>
+      <div class="onboarding-actions">
+        <button type="button" id="confirm-modal-cancel" class="btn btn-secondary btn-sm">取消</button>
+        <button type="button" id="confirm-modal-ok" class="btn btn-primary btn-sm">
+          <span class="btn-label">確定</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="force-logout-modal" class="modal-overlay glass-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="force-logout-title">
+    <div class="modal-card glass-card force-logout-modal-card">
+      <h2 id="force-logout-title">強制登出</h2>
+      <p id="force-logout-body" class="trophy-modal-subtitle">確定要登出這位參加者嗎？</p>
+      <div class="onboarding-actions">
+        <button type="button" id="force-logout-cancel" class="btn btn-secondary btn-sm">取消</button>
+        <button type="button" id="force-logout-confirm" class="btn btn-danger btn-sm btn-progress">
+          <span class="btn-label">登出</span>
+          <span class="btn-progress-bar" aria-hidden="true"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="force-logout-all-modal" class="modal-overlay glass-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="force-logout-all-title">
+    <div class="modal-card glass-card force-logout-modal-card">
+      <h2 id="force-logout-all-title">全部強制登出</h2>
+      <p class="trophy-modal-subtitle">Staff / Admin 不受限制。參加者可即時重新登入。</p>
+      <div class="onboarding-actions">
+        <button type="button" id="force-logout-all-cancel" class="btn btn-secondary btn-sm">取消</button>
+        <button type="button" id="force-logout-all-confirm" class="btn btn-danger btn-sm btn-progress">
+          <span class="btn-label">全部登出</span>
+          <span class="btn-progress-bar" aria-hidden="true"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="group-rename-modal" class="modal-overlay glass-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="group-rename-title">
+    <div class="modal-card glass-card roster-edit-modal-card">
+      <h2 id="group-rename-title">改組名</h2>
+      <p id="group-rename-subtitle" class="form-hint"></p>
+      <div class="form-group">
+        <label for="group-rename-input">顯示名稱</label>
+        <input type="text" id="group-rename-input" class="input-field" maxlength="40" autocomplete="off" placeholder="例如：火熱第一組（留空還原預設）">
+      </div>
+      <div class="onboarding-actions roster-edit-actions">
+        <button type="button" id="group-rename-cancel" class="btn btn-secondary btn-sm">取消</button>
+        <button type="button" id="group-rename-save" class="btn btn-primary btn-sm btn-progress">
+          <span class="btn-label">儲存</span>
+          <span class="btn-progress-bar" aria-hidden="true"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="roster-edit-modal" class="modal-overlay glass-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="roster-edit-title">
+    <div class="modal-card glass-card roster-edit-modal-card">
+      <h2 id="roster-edit-title">編輯參加者</h2>
+      <p id="roster-edit-subtitle" class="form-hint"></p>
+      <div class="form-group">
+        <label for="roster-edit-id">登入編號</label>
+        <input type="text" id="roster-edit-id" class="input-field" maxlength="20" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label for="roster-edit-name">顯示名稱</label>
+        <input type="text" id="roster-edit-name" class="input-field" maxlength="40" autocomplete="off" placeholder="可留空">
+      </div>
+      <div class="form-group">
+        <label for="roster-edit-password">密碼</label>
+        <input type="text" id="roster-edit-password" class="input-field" maxlength="40" autocomplete="off" placeholder="密碼">
+      </div>
+      <div class="form-group">
+        <label for="roster-edit-group">分組</label>
+        <select id="roster-edit-group" class="input-field" aria-label="選擇分組"></select>
+      </div>
+      <div class="onboarding-actions roster-edit-actions">
+        <button type="button" id="roster-edit-delete" class="btn btn-danger btn-sm">刪除</button>
+        <span class="roster-edit-spacer"></span>
+        <button type="button" id="roster-edit-cancel" class="btn btn-secondary btn-sm">取消</button>
+        <button type="button" id="roster-edit-save" class="btn btn-primary btn-sm btn-progress">
+          <span class="btn-label">儲存</span>
+          <span class="btn-progress-bar" aria-hidden="true"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="roster-add-modal" class="modal-overlay glass-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="roster-add-title">
+    <div class="modal-card glass-card roster-edit-modal-card">
+      <h2 id="roster-add-title">新增參加者</h2>
+      <div class="form-group">
+        <label for="roster-add-kind">類型</label>
+        <select id="roster-add-kind" class="input-field">
+          <option value="seat">座位參加者</option>
+          <option value="staff">Staff</option>
+        </select>
+      </div>
+      <div class="form-group" id="roster-add-id-wrap">
+        <label for="roster-add-id">Staff 編號</label>
+        <input type="text" id="roster-add-id" class="input-field" maxlength="20" autocomplete="off" placeholder="例如 WILL">
+      </div>
+      <div class="form-group">
+        <label for="roster-add-name">顯示名稱</label>
+        <input type="text" id="roster-add-name" class="input-field" maxlength="40" autocomplete="off" placeholder="可留空">
+      </div>
+      <div class="form-group">
+        <label for="roster-add-password">密碼</label>
+        <input type="text" id="roster-add-password" class="input-field" maxlength="40" autocomplete="off" placeholder="密碼">
+      </div>
+      <div class="form-group">
+        <label for="roster-add-group">分組</label>
+        <select id="roster-add-group" class="input-field"></select>
+      </div>
+      <div class="onboarding-actions">
+        <button type="button" id="roster-add-cancel" class="btn btn-secondary btn-sm">取消</button>
+        <button type="button" id="roster-add-save" class="btn btn-primary btn-sm btn-progress">
+          <span class="btn-label">新增</span>
+          <span class="btn-progress-bar" aria-hidden="true"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ ADMIN APP ═══ -->
+  <section id="screen-admin" class="screen screen-app hidden" aria-label="管理員控制台">
+    <header class="app-header admin-header" data-tour="admin-header">
+      <div class="app-header-content">
+        <h1 class="greeting-text">管理員控制台</h1>
+        <span id="admin-live-badge" class="badge badge-live" data-tour="admin-live-badge">
+          <span class="live-dot"></span> 即時
+        </span>
+        <span id="admin-queue-pill" class="badge badge-queue hidden" role="status" aria-live="polite">排隊 0</span>
+      </div>
+      <div class="app-header-actions">
+        <button type="button" class="btn btn-ghost btn-icon page-help-btn" aria-label="本頁說明" title="本頁說明">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="9"/>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </button>
+        <button type="button" id="admin-logout" class="btn btn-ghost btn-icon" aria-label="登出" data-tour="admin-logout">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="admin-workspace">
+    <nav class="bottom-nav admin-bottom-nav" role="tablist" aria-label="管理員導航">
+      <button type="button" class="bottom-nav-item active" data-admin-tab="dashboard" role="tab" aria-selected="true">
+        <span class="bottom-nav-icon app-icon app-icon-chart" aria-hidden="true"></span>
+        <span class="bottom-nav-label">Dashboard</span>
+      </button>
+      <button type="button" class="bottom-nav-item" data-admin-tab="messages" role="tab" aria-selected="false">
+        <span class="bottom-nav-icon app-icon app-icon-chat" aria-hidden="true"></span>
+        <span class="bottom-nav-label">Messages</span>
+      </button>
+      <button type="button" class="bottom-nav-item" data-admin-tab="voting" role="tab" aria-selected="false">
+        <span class="bottom-nav-icon app-icon app-icon-trophy" aria-hidden="true"></span>
+        <span class="bottom-nav-label">Voting</span>
+      </button>
+      <button type="button" class="bottom-nav-item" data-admin-tab="results" role="tab" aria-selected="false">
+        <span class="bottom-nav-icon app-icon app-icon-clipboard" aria-hidden="true"></span>
+        <span class="bottom-nav-label">Results</span>
+      </button>
+      <button type="button" class="bottom-nav-item" data-admin-tab="settings" role="tab" aria-selected="false">
+        <span class="bottom-nav-icon app-icon app-icon-settings" aria-hidden="true"></span>
+        <span class="bottom-nav-label">Settings</span>
+      </button>
+    </nav>
+
+    <main class="app-main">
+      <!-- Dashboard -->
+      <div id="admin-dashboard-panel" class="admin-panel active" data-admin-view="dashboard">
+        <div id="admin-dashboard-stats" class="stats-grid" data-tour="admin-stats"></div>
+
+        <div class="card admin-roster-card" data-tour="admin-roster-board">
+          <div class="admin-roster-header">
+            <div>
+              <h3 class="section-title">分組管理</h3>
+              <p class="form-hint">拖曳參加者／Staff 到各組後，撳「確認變更」先會寫入。撳組名旁「改名」可自訂顯示名稱。座位組確認後會自動重編號。未分配組唔參與留言／投票。</p>
+              <p id="admin-roster-pending-hint" class="form-hint roster-pending-hint hidden" role="status">有未儲存嘅分組變更</p>
+            </div>
+            <div class="admin-roster-actions">
+              <button type="button" id="admin-roster-discard" class="btn btn-secondary btn-sm hidden" disabled>取消變更</button>
+              <button type="button" id="admin-roster-confirm" class="btn btn-primary btn-sm btn-progress hidden" disabled>
+                <span class="btn-label">確認變更</span>
+                <span class="btn-progress-bar" aria-hidden="true"></span>
+              </button>
+              <button type="button" id="admin-roster-add" class="btn btn-primary btn-sm">新增</button>
+            </div>
+          </div>
+          <div id="admin-roster-board" class="admin-roster-board" aria-label="分組看板"></div>
+        </div>
+
+        <div class="admin-dashboard-side">
+        <div class="card" data-tour="admin-login-status">
+          <div id="admin-login-status" class="admin-pending"></div>
+        </div>
+        <div class="card" data-tour="admin-live-load">
+          <h3 class="section-title">即時負載</h3>
+          <div id="admin-live-load" class="stats-grid live-load-grid"></div>
+          <p class="hint-text">近幾分鐘留言同投票進度，方便活動當日掌握場內節奏。</p>
+        </div>
+        <div class="card" data-tour="admin-system-status">
+          <h3 class="section-title">系統狀態</h3>
+          <div id="admin-dashboard-status" class="status-row"></div>
+        </div>
+        <div class="card" data-tour="admin-recent-activity">
+          <h3 class="section-title">最近活動</h3>
+          <div id="admin-recent-activity" class="recent-activity"></div>
+        </div>
+        </div>
+      </div>
+
+      <!-- Messages -->
+      <div id="admin-messages-panel" class="admin-panel hidden" data-admin-view="messages">
+        <div class="search-bar admin-msg-filters" data-tour="admin-msg-filters">
+          <input type="search" id="admin-msg-search" class="input-field" placeholder="搜尋留言…" aria-label="搜尋留言">
+          <select id="admin-msg-group-filter" class="input-field" aria-label="按組別篩選">
+            <option value="">全部組別</option>
+          </select>
+        </div>
+        <div class="admin-controls" data-tour="admin-msg-controls">
+          <div class="filter-chips" role="group" aria-label="篩選">
+            <button type="button" class="chip chip-filter active" data-filter="all">全部</button>
+            <button type="button" class="chip chip-filter" data-filter="active">有效</button>
+            <button type="button" class="chip chip-filter" data-filter="deleted">已撤回</button>
+          </div>
+          <div class="admin-meta">
+            <span id="admin-sync-time">上次同步：—</span>
+            <span id="admin-msg-count">共 0 則</span>
+          </div>
+        </div>
+        <div id="admin-message-list" class="admin-message-list" data-tour="admin-msg-list"></div>
+        <div id="admin-msg-empty" class="empty-state empty-illustration hidden">
+          <div class="illustration-circle"><span class="app-icon app-icon-chat" aria-hidden="true"></span></div>
+          <h3>暫無留言</h3>
+          <p>參加者發送留言後會即時顯示</p>
+        </div>
+      </div>
+
+      <!-- Voting -->
+      <div id="admin-trophy-panel" class="admin-panel hidden" data-admin-view="voting">
+        <div id="admin-voting-status-badge" class="voting-status-badge" data-tour="admin-voting-badge">—</div>
+
+        <div class="voting-stepper" data-tour="admin-voting-stepper">
+          <div class="stepper-step" data-step="VOTING_OPEN"><span class="stepper-dot"></span><span class="stepper-label">開放投票</span></div>
+          <div class="stepper-line"></div>
+          <div class="stepper-step" data-step="VOTING_CLOSED"><span class="stepper-dot"></span><span class="stepper-label">關閉投票</span></div>
+          <div class="stepper-line"></div>
+          <div class="stepper-step" data-step="CALCULATED"><span class="stepper-dot"></span><span class="stepper-label">計算</span></div>
+          <div class="stepper-line"></div>
+          <div class="stepper-step" data-step="PUBLISHED"><span class="stepper-dot"></span><span class="stepper-label">公布</span></div>
+        </div>
+
+        <div id="admin-trophy-stats" class="stats-grid" data-tour="admin-voting-stats"></div>
+        <div class="admin-trophy-controls" data-tour="admin-voting-controls">
+          <button type="button" id="admin-open-voting" class="btn btn-success btn-progress">
+            <span class="btn-label">開放投票</span>
+            <span class="btn-progress-bar" aria-hidden="true"></span>
+          </button>
+          <button type="button" id="admin-close-voting" class="btn btn-secondary btn-progress">
+            <span class="btn-label">關閉投票</span>
+            <span class="btn-progress-bar" aria-hidden="true"></span>
+          </button>
+          <button type="button" id="admin-calculate" class="btn btn-primary btn-progress">
+            <span class="btn-label">計算結果</span>
+            <span class="btn-progress-bar" aria-hidden="true"></span>
+          </button>
+          <button type="button" id="admin-publish" class="btn btn-primary btn-progress">
+            <span class="btn-label">公布結果</span>
+            <span class="btn-progress-bar" aria-hidden="true"></span>
+          </button>
+        </div>
+        <div id="admin-pending-voters" class="admin-pending" data-tour="admin-pending-voters"></div>
+      </div>
+
+      <!-- Results -->
+      <div id="admin-results-panel" class="admin-panel hidden" data-admin-view="results">
+        <nav class="sub-tab-nav" role="tablist" aria-label="結果檢視" data-tour="admin-result-tabs">
+          <button type="button" class="sub-tab-btn active" data-result-tab="audit">投票審計</button>
+          <button type="button" class="sub-tab-btn" data-result-tab="profiles">個人檔案</button>
+          <button type="button" class="sub-tab-btn" data-result-tab="summary">獎項摘要</button>
+        </nav>
+
+        <div id="result-audit" class="result-panel active">
+          <div class="audit-filters" data-tour="admin-audit-filters">
+            <input type="search" id="audit-search" class="input-field" placeholder="搜尋參加者…" aria-label="搜尋參加者">
+            <select id="audit-trophy-filter" class="input-field" aria-label="篩選獎項">
+              <option value="">全部獎項</option>
+            </select>
+          </div>
+          <div id="audit-cards" class="audit-cards" data-tour="admin-audit-cards"></div>
+          <div class="table-wrap hidden">
+            <table id="audit-table" class="data-table">
+              <thead><tr><th>投票者</th><th>接收者</th><th>獎項</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="result-profiles" class="result-panel hidden">
+          <div id="profiles-list" class="profiles-grid" data-tour="admin-profiles"></div>
+        </div>
+
+        <div id="result-summary" class="result-panel hidden">
+          <div id="summary-list" class="summary-list accordion" data-tour="admin-summary"></div>
+        </div>
+      </div>
+
+      <!-- Settings -->
+      <div id="admin-participants-panel" class="admin-panel hidden" data-admin-view="settings">
+        <div class="card" data-tour="admin-msg-toggle">
+          <h3 class="section-title">留言控制</h3>
+          <p class="form-hint">全域關閉會停用所有組。Staff 可另外覆寫自己負責組別。</p>
+          <div class="toggle-row">
+            <span class="toggle-label">全域留言功能</span>
+            <div class="toggle-group">
+              <button type="button" id="admin-enable-msg" class="btn btn-success btn-sm btn-progress">
+                <span class="btn-label">開啟</span>
+                <span class="btn-progress-bar" aria-hidden="true"></span>
+              </button>
+              <button type="button" id="admin-disable-msg" class="btn btn-danger btn-sm btn-progress">
+                <span class="btn-label">關閉</span>
+                <span class="btn-progress-bar" aria-hidden="true"></span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" data-tour="admin-push-config">
+          <h3 class="section-title">推送通知（Web Push）</h3>
+          <p class="form-hint">免費方案唔使填。只有升級 Blaze 並部署 Cloud Functions 之後，先至可以喺 App 完全關閉時仍然推送。</p>
+          <div class="form-group">
+            <label for="admin-vapid-key">VAPID 金鑰</label>
+            <input type="text" id="admin-vapid-key" class="input-field" autocomplete="off" placeholder="BPxxxxxxxx…">
+          </div>
+          <button type="button" id="admin-save-vapid" class="btn btn-primary btn-sm btn-progress">
+            <span class="btn-label">儲存推送金鑰</span>
+            <span class="btn-progress-bar" aria-hidden="true"></span>
+          </button>
+        </div>
+
+        <div class="card" data-tour="admin-group-overrides">
+          <h3 class="section-title">各組狀態（Staff 覆寫）</h3>
+          <p class="form-hint">可改組名、查看 Staff 覆寫狀態，並獨立控制該組留言／投票。將 Staff（如 WILL）分到 GROUP_1…6 後，對方亦可改組名同監控組內留言。</p>
+          <div id="admin-group-overrides" class="admin-group-overrides"></div>
+        </div>
+
+        <div class="card admin-participant-form" data-tour="admin-participant-manage">
+          <h3 class="section-title">參加者管理</h3>
+          <p class="form-hint">選擇參加者以查看、修改資料或刪除其所有紀錄</p>
+
+          <div class="admin-participant-bulk" data-tour="admin-bulk-actions">
+            <h4>批量操作（全部參加者）</h4>
+            <div class="admin-bulk-actions">
+              <button type="button" id="admin-bulk-reset-votes" class="btn btn-danger btn-sm btn-progress">
+                <span class="btn-label">重置全部參加者投票</span>
+                <span class="btn-progress-bar" aria-hidden="true"></span>
+              </button>
+              <button type="button" id="admin-bulk-delete-all" class="btn btn-danger btn-sm btn-progress">
+                <span class="btn-label">刪除全部參加者紀錄</span>
+                <span class="btn-progress-bar" aria-hidden="true"></span>
+              </button>
+            </div>
+          </div>
+
+          <div class="form-group" data-tour="admin-pick-participant">
+            <label for="admin-participant-select">選擇參加者</label>
+            <div class="combobox-wrapper" id="admin-participant-combobox">
+              <input type="text" id="admin-participant-select" class="combobox-input input-field" autocomplete="off"
+                placeholder="輸入或選擇參加者" aria-autocomplete="list" aria-controls="admin-participant-dropdown"
+                aria-expanded="false" role="combobox">
+              <button type="button" id="admin-participant-toggle" class="combobox-toggle" aria-label="展開選單">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+              </button>
+              <ul id="admin-participant-dropdown" class="combobox-dropdown hidden" role="listbox"></ul>
+            </div>
+          </div>
+
+          <div id="admin-participant-detail" class="admin-participant-detail hidden">
+            <div id="admin-participant-stats" class="stats-grid"></div>
+            <div class="admin-participant-edit">
+              <h4>修改資料</h4>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="admin-edit-phone">密碼</label>
+                  <input type="text" id="admin-edit-phone" class="input-field" maxlength="30" autocomplete="off" placeholder="密碼">
+                </div>
+                <div class="form-group">
+                  <label for="admin-edit-group">分組 (group_id)</label>
+                  <select id="admin-edit-group" class="input-field" aria-label="選擇分組"></select>
+                </div>
+              </div>
+              <button type="button" id="admin-save-participant" class="btn btn-primary btn-sm btn-progress">
+                <span class="btn-label">儲存修改</span>
+                <span class="btn-progress-bar" aria-hidden="true"></span>
+              </button>
+            </div>
+            <div class="admin-participant-danger">
+              <h4>刪除紀錄</h4>
+              <div class="admin-danger-actions">
+                <button type="button" id="admin-delete-messages" class="btn btn-danger btn-sm btn-progress">
+                  <span class="btn-label">撤回全部已發留言</span>
+                  <span class="btn-progress-bar" aria-hidden="true"></span>
+                </button>
+                <button type="button" id="admin-reset-trophy" class="btn btn-danger btn-sm btn-progress">
+                  <span class="btn-label">重置獎項投票</span>
+                  <span class="btn-progress-bar" aria-hidden="true"></span>
+                </button>
+                <button type="button" id="admin-delete-all-records" class="btn btn-danger btn-sm btn-progress">
+                  <span class="btn-label">刪除全部紀錄</span>
+                  <span class="btn-progress-bar" aria-hidden="true"></span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 class="section-title">系統資訊</h3>
+          <div id="admin-system-info" class="system-info">
+            <div class="info-row"><span>版本</span><span id="admin-version">—</span></div>
+            <div class="info-row"><span>參加者</span><span id="admin-participant-count">—</span></div>
+          </div>
+        </div>
+      </div>
+    </main>
+    </div>
+  </section>
+
+  <script type="module" src="app.js?v=f6ec941"></script>
+</body>
+</html>
