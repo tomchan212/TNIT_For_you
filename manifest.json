@@ -1,0 +1,26 @@
+{
+  "name": "HKCYS TNIT — Just For You",
+  "short_name": "TNIT",
+  "description": "HKCYS TNIT 活動應用：匿名留言同獎項配對",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FFF9F2",
+  "theme_color": "#FFF9F2",
+  "lang": "zh-Hant",
+  "icons": [
+    {
+      "src": "assets/heart.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/heart.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
